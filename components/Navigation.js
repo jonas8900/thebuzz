@@ -26,6 +26,10 @@ export default function Navigation({session}) {
         }
     };
 
+    function handleSignOut() {
+        signOut({ callbackUrl: '/auth/login' });
+    }
+
 
     const handleAnimationComplete = (definition) => {
         if (definition === "open") {
@@ -118,7 +122,7 @@ export default function Navigation({session}) {
 
 
                                                 {session ? (
-                                                <button class="flex items-center px-3 py-2 text-gray-600 w-full cursor-pointer transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700" onClick={() => signOut()}>
+                                                <button class="flex items-center px-3 py-2 text-gray-600 w-full cursor-pointer transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700" onClick={handleSignOut}>
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                                     </svg>
