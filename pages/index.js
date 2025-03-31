@@ -8,7 +8,10 @@ import ChooseAdminOrPlayer from "../components/game/chooseAdminOrPlayer";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 
-const socket = io(); 
+const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
+  path: '/socket.io', 
+  transports: ['websocket', 'polling'], 
+});
 
 export default function Home() {
   const { data: session, status } = useSession();
