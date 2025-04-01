@@ -2,7 +2,7 @@
 
 // const images = [
 //   "/images/patrick.png",
-//   "/images/derLord.png",
+//   "/images/derLord.webp",
 //   "/images/patrick.png",
 //   "/images/patrick.png",
 // ];

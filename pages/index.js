@@ -53,7 +53,7 @@ export default function Home() {
   return (
     <>
       <motion.main
-        className="bg-[url(/images/images.png)] bg-contain bg-center bg-no-repeat h-screen w-full flex flex-col justify-center items-center relative overflow-hidden"
+        className="bg-[url(/images/images.webp)] bg-contain bg-center bg-no-repeat h-screen w-full flex flex-col justify-center items-center relative overflow-hidden"
         initial="hidden"
         animate="visible"
         variants={fadeIn}
