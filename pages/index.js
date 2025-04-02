@@ -7,6 +7,8 @@ import Navigation from "../components/Navigation";
 import ChooseAdminOrPlayer from "../components/game/chooseAdminOrPlayer";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
+import Panel from "../components/informationcard/Panel";
+
 
 const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
   path: '/socket.io', 
@@ -16,6 +18,8 @@ const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756
 export default function Home() {
   const { data: session, status } = useSession();
   const [timestamps, setTimestamps] = useState([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [dynamicData, setDynamicData] = useState('');
   const router = useRouter();
 
 
@@ -59,17 +63,18 @@ export default function Home() {
         variants={fadeIn}
       >
         <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-          <Navigation session={session}/>
+          <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData}/>
         </motion.div>
         <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.5 }}>
+          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen}/>
           <ChooseAdminOrPlayer />
-          <div className="absolute top-0">
-          <button 
+          <div className="absolute bottom-1/4 transform -translate-y-1/2 left-1/2 transform -translate-x-1/2 text-center text-white">
+          {/* <button 
             onClick={handleSendTimestamp} 
-            className="p-2 bg-blue-500 text-white rounded-md shadow-lg"
+            className="p-2 bg-blue-500 text-white rounded-md shadow-lg "
           >
             Send Timestamp
-          </button>
+          </button> */}
           <ul className="mt-0 text-white">
             {timestamps.map((timestamp, index) => (
               <li key={index}>Timestamp received: {timestamp}</li>
