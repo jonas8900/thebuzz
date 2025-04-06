@@ -27,7 +27,9 @@ export default function Navigation({session, setPanelOpen, panelOpen, dynamicDat
     };
 
     function handleSignOut() {
-        signOut({ callbackUrl: '/auth/login' });
+        signOut(
+            { callbackUrl: '/auth/login' }
+        );
     }
 
 

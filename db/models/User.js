@@ -10,6 +10,7 @@ const userSchema = new Schema({
     name: {type: String, required: [true, "Name ist erforderlich"], trim: true},
     username: {type: String, required: [true, "Benutzername ist erforderlich"], unique: true, trim: true},
     yourgames: [{type: Schema.Types.ObjectId, ref: "Game"}],
+    chosengame: {type: Schema.Types.ObjectId, ref: "Game"},
     createdAt: {type: Date, default: Date.now},
 });
 

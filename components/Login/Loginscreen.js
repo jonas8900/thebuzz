@@ -67,12 +67,6 @@ export default function LoginScreen({ handleSubmit }) {
     setTypeSwitch("password");
   }
 
-  function handleToggleToast() {
-    setShowSuccess(true);
-    setTimeout(() => {
-      setShowSuccess(false);
-    }, 5000);
-  }
 
   function handleClickOutside(e) {
     if (overlayRef.current && !overlayRef.current.contains(e.target)) {
@@ -179,7 +173,7 @@ export default function LoginScreen({ handleSubmit }) {
               <div class="mt-8">
                 <button
                   class="cursor-pointer bg-purple-700 text-white font-bold py-2 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200"
-                  onClick={handleToggleToast}>
+                  >
                   Login
                 </button>
               </div>

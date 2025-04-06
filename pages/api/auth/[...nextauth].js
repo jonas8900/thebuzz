@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { signOut } from "next-auth/react";
 
 const rateLimiter = new RateLimiterMemory({
   points: 5, 
@@ -66,7 +67,22 @@ export const authOptions = {
     signOut: "/auth/login",
     error: "/auth/login",
   },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
   callbacks: {
+    async signIn({ user, account, profile, email, credentials }) {
+      if (!user) {
+        return false;
+      }
+
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
