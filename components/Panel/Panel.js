@@ -9,6 +9,9 @@ import useSWR, { mutate } from "swr";
 import ErrorMessage from "../Toast/ErrorMessage";
 import SuccessMessage from "../Toast/SuccessMessage";
 import ShowQuestions from "../PanelPages/Questions/ShowQuestion";
+import InvitePlayer from "../PanelPages/Player/InvitePlayer";
+import StartGame from "../PanelPages/Game/StartGame";
+import Loading from "../Status/Loading";
 
 export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
@@ -31,18 +34,13 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
 
 
  
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center w-full h-full">
-          <Loader className="h-10 w-10 animate-spin text-blue-500" />
-        </div>
-      );
-    }
+    if (isLoading) return <Loading/>
+   
 
     const menuItems = [
         { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
         { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
-        { title: 'Spiel', subItems: ['Anzeigen', 'Auswählen', 'Erstellen', 'Einstellungen'] },
+        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
     ];
 
 
@@ -155,10 +153,9 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                     {activeSection.title === 'Fragen' && activeSection.subItem === 'Anzeigen' && <ShowQuestions/>}
 
                     {activeSection.title === 'Spieler' && activeSection.subItem === 'Anzeigen' && <div>Spieler anzeigen Inhalt</div>}
-                    {activeSection.title === 'Spieler' && activeSection.subItem === 'Einladen' && <div>Spieler einladen Inhalt</div>}
+                    {activeSection.title === 'Spieler' && activeSection.subItem === 'Einladen' && <InvitePlayer/>}
 
-                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Anzeigen' && <div>Spiel anzeigen Inhalt</div>}
-                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Auswählen' && <div>Spiel auswählen Inhalt</div>}
+                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Starten' && <StartGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Erstellen' && <AddGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Einstellungen' && <div>Spiel Einstellungen Inhalt</div>}
                   </div>

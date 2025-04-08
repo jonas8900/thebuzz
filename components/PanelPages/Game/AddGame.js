@@ -5,6 +5,7 @@ import ErrorMessage from "../../Toast/ErrorMessage";
 import SuccessMessage from "../../Toast/SuccessMessage";
 import useSWR, { mutate } from "swr";
 import { Loader } from "lucide-react";
+import Loading from "../../Status/Loading";
 
 export default function AddGame() {
     const { data: session } = useSession();
@@ -22,13 +23,8 @@ export default function AddGame() {
     if(!data) return null;
 
  
-    if (isLoading) {
-      return (
-        <div className="flex justify-center items-center w-full h-full">
-          <Loader className="h-10 w-10 animate-spin text-blue-500" />
-        </div>
-      );
-    }
+    if (isLoading) return <Loading/>;
+
 
     async function handleAddGame(event) {
         event.preventDefault();
@@ -39,7 +35,7 @@ export default function AddGame() {
         console.log(Data);
         const gameName = formData.get("gameName");
 
-        const response = await fetch("/api/game/addGame", {
+        const response = await fetch("/api/game/createGameAsAdmin", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

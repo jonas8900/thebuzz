@@ -11,8 +11,14 @@ const gameSchema = new Schema({
     invitelink: { type: String },
     scores: [{ player: { type: Schema.Types.ObjectId, ref: "User" }, points: { type: Number, default: 0 } }],
     files: [{ type: String }],
+    gameOpenedBy: { type: Schema.Types.ObjectId, ref: "User" },
     createdAt: { type: Date, default: Date.now },
 });
+
+gameSchema.index({ players: 1 });
+gameSchema.index({ admin: 1 });
+gameSchema.index({ questions: 1 });
+gameSchema.index({ scores: 1 });
 
 const Game = mongoose.models.Game || mongoose.model("Game", gameSchema);
 

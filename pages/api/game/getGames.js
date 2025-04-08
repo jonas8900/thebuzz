@@ -18,7 +18,7 @@ export default async function handler(request, response) {
           const userId = session.user.id;
     
           
-          const games = await Game.find({ players: userId })
+          const games = await Game.find({ admin: userId })
                 .select("_id name")
                 .lean();
 

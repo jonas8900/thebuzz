@@ -20,19 +20,14 @@ export default async function handler(req, res) {
 
   const userId = session.user.id;
 
-  console.log(req.body);
-
   const { name } = req.body;
 
-  console.log(name);
 
   try {
    
     const newGame = await Game.create({
-      name: name,  
-      players: [userId],    
+      name: name,     
       admin: [userId],    
-
     });
 
     const updatedUser = await User.findByIdAndUpdate(

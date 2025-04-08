@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
+import Loading from "../../Status/Loading";
 
 export default function AddQuestions() {
     const { data: session } = useSession();
@@ -22,16 +23,11 @@ export default function AddQuestions() {
     }
 
     if (isLoading) {
-        return (
-        <div className="flex justify-center items-center w-full h-full">
-            <Loader className="h-10 w-10 animate-spin text-blue-500" />
-        </div>
-        );
+        return <Loading/>
     }
 
     if (!session) return null;
 
-    console.log(data)
 
     return (
         <>

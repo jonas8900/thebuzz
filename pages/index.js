@@ -7,7 +7,8 @@ import Navigation from "../components/Navigation";
 import ChooseAdminOrPlayer from "../components/game/chooseAdminOrPlayer";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import Panel from "../components/informationcard/Panel";
+import Panel from "../components/Panel/Panel";
+import Loading from "../components/Status/Loading";
 
 
 const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
@@ -84,6 +85,7 @@ export default function Home() {
         </motion.div>
         
       </motion.main>
+
     </>
   );
 }

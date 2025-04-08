@@ -25,6 +25,10 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 }
 
+
+userSchema.index({ chosengame: 1 });
+userSchema.index({ yourgames: 1 });
+
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;

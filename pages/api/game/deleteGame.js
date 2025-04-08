@@ -18,12 +18,7 @@ export default async function handler(req, res) {
     return res.status(403).json({ message: "No access" });
   }
 
-
-  console.log(req.body);
-
   const { gameId } = req.body;
-
-  console.log(gameId);
 
   try {
    
