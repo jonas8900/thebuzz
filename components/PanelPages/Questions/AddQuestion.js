@@ -222,9 +222,9 @@ export default function AddQuestions() {
                                     name="correctAnswer"
                                     className="p-2 pt-4 w-full border border-black bg-gray-100 text-black dark:bg-gray-900 dark:border-white dark:text-white rounded focus:outline-none"
                                 >
-                                    {answers.map((answer, index) => (
+                                    {answers.map((index) => (
                                         <option key={index} value={index + 1}>
-                                            Antwort {index + 1}: {answer}
+                                            Antwort {index + 1}
                                         </option>
                                     ))}
                                 </select>

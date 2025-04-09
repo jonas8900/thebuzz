@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import { motion } from "framer-motion";
 import Navigation from "../components/Navigation";
-import ChooseAdminOrPlayer from "../components/game/chooseAdminOrPlayer";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
+import JoinGame from "../components/game/JoinGame";
 
 
 const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
@@ -36,7 +36,7 @@ export default function Home() {
   }, []);
 
   if (status === "loading") {
-    return <h1>Lade...</h1>;
+    return <Loading />;
   }
 
   if (status === "unauthenticated") {
@@ -68,7 +68,7 @@ export default function Home() {
         </motion.div>
         <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.5 }}>
           <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen}/>
-          <ChooseAdminOrPlayer />
+          <JoinGame />
           <div className="absolute bottom-1/4 transform -translate-y-1/2 left-1/2 transform -translate-x-1/2 text-center text-white">
           {/* <button 
             onClick={handleSendTimestamp} 

@@ -48,10 +48,11 @@ export default function LoginScreen({ handleSubmit }) {
 
     if (response.ok) {
       setShowSuccess(true);
-      setToastMessage("Erfolgreich eingeloggt! 🎉");
+      setToastMessage("Erfolgreich Registriert! 🎉");
       setTimeout(() => {
         setShowSuccess(false);
         setToastMessage("");
+        setRegistered(false);
         router.push("/auth/login");
       }, 5000);
     } else {
@@ -355,7 +356,7 @@ export default function LoginScreen({ handleSubmit }) {
                       <button
                         type="submit"
                         class="cursor-pointer mt-5 bg-purple-700 text-white font-bold py-3 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200">
-                        Reset password
+                        Registrieren
                       </button>
                     </div>
                   </form>

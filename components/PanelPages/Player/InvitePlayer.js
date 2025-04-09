@@ -5,6 +5,7 @@ import useSWR from "swr";
 
 export default function InvitePlayer() {
     const { data, error, mutate } = useSWR("/api/game/getChosenGame");
+
     const [toastMessage, setToastMessage] = useState("");
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
@@ -17,8 +18,10 @@ export default function InvitePlayer() {
     useEffect(() => {
         if (game?.invitelink) {
           setInviteLink(game.invitelink);
+        } else {
+          setInviteLink("");
         }
-      }, [game]);
+      }, [game, data]);
     
 
     function handleSendInvite(e) {
@@ -46,7 +49,7 @@ export default function InvitePlayer() {
           }
     
           setInviteLink(result.invitelink); 
-          mutate(); 
+          mutate("/api/game/getChosenGame"); 
           setShowSuccess(true);
           setToastMessage("Einladungslink erfolgreich generiert!");
           setTimeout(() => setShowSuccess(false), 3000);
