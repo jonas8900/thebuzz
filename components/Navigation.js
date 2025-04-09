@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
 
 
-export default function Navigation({session, setPanelOpen, panelOpen, dynamicData, setDynamicData}) {
+export default function Navigation({session, setPanelOpen, panelOpen, dynamicData, setDynamicData, setCreateGameOpen, createGameOpen}) {
     const [fullscreen, setFullScreen] = useState(true);
     const [contentVisible, setContentVisible] = useState(true);
-   
+    const [addNewGameOpen, setAddNewGameOpen] = useState(false);
 
     const sidebarVariants = {
         open: { 
@@ -31,7 +31,7 @@ export default function Navigation({session, setPanelOpen, panelOpen, dynamicDat
             { callbackUrl: '/auth/login' }
         );
     }
-
+    
 
     function handleAnimationComplete(definition) {
         if (definition === "open") {
@@ -49,6 +49,12 @@ export default function Navigation({session, setPanelOpen, panelOpen, dynamicDat
             setDynamicData(data);
             setPanelOpen(true);
         }
+    }
+
+    function handleOpenAdminPanel() {
+        setPanelOpen(true);
+        setDynamicData('admin');
+        setCreateGameOpen(true);
     }
 
     return(
@@ -93,7 +99,7 @@ export default function Navigation({session, setPanelOpen, panelOpen, dynamicDat
                                         <div className="space-y-3">
                                             <label className="px-3 font-semibold text-sm text-gray-800 uppercase dark:text-gray-400">Spiel</label>
                            
-                                            <a class="flex items-center px-3 py-2 text-gray-600 mt-3 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700" href="#">
+                                            <button class="flex items-center px-3 py-2 w-full cursor-pointer text-gray-600 mt-3 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700" onClick={() => handleOpenAdminPanel()}>
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                             </svg>
@@ -101,7 +107,7 @@ export default function Navigation({session, setPanelOpen, panelOpen, dynamicDat
 
 
                                                 <span class="mx-2 text-m font-medium">Neues Spiel anlegen</span>
-                                            </a>
+                                            </button>
 
 
                                             <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700" href="#">

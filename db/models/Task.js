@@ -8,7 +8,7 @@ const taskSchema = new Schema({
   mode: { type: String, required: true },
   gameId: { type: String, required: true },
   points: { type: Number, required: true },
-  
+  file: { type: String },
 });
 
 const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);

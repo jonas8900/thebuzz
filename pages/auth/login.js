@@ -33,7 +33,7 @@ export default function Login() {
             setTimeout(() => {
                 setShowError(false);
                 setToastMessage("");
-            }, 5000);
+            }, 4000);
         } else {
             setShowSuccess(true);
             setToastMessage("Erfolgreich eingeloggt!");
@@ -41,7 +41,7 @@ export default function Login() {
                 setShowSuccess(false);
                 setToastMessage("");
                 router.push("/");
-            }, 5000);
+            }, 2000);
         }
     }
 

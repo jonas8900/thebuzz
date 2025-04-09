@@ -17,7 +17,7 @@ export default function AddQuestions() {
     if (data.message) {
         return (
         <div className="flex justify-center items-center w-full h-full">
-            <p className="text-red-500">{data.message}</p>
+            <p className="text-gray-500">{data.message}</p>
         </div>
         );
     }

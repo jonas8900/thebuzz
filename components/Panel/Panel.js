@@ -13,7 +13,7 @@ import InvitePlayer from "../PanelPages/Player/InvitePlayer";
 import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
 
-export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen}) {
+export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
     
     const [activeSection, setActiveSection] = useState( {title: 'Fragen', subItem: 'Anlegen'} );
@@ -23,8 +23,23 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     const [toastMessage, setToastMessage] = useState("");
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const menuItems = [
+        { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
+        { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
+        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
+    ];
 
-    if(!panelOpen) return null; 
+
+    useEffect(() => {
+        if(createGameOpen) {
+            console.log(createGameOpen)
+            setPanelOpen(true);
+            setActiveSection({ title: 'Spiel', subItem: 'Erstellen' });
+            setCreateGameOpen(false);
+        }
+
+    }, [createGameOpen, setPanelOpen]);
+
     if(!session) {
         router.push("/auth/login");
         return null;
@@ -37,11 +52,11 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     if (isLoading) return <Loading/>
    
 
-    const menuItems = [
-        { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
-        { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
-        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
-    ];
+
+   
+
+
+
 
 
     async function handleChangeGame(selectedGameId) {

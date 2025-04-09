@@ -12,6 +12,8 @@ const userSchema = new Schema({
     yourgames: [{type: Schema.Types.ObjectId, ref: "Game"}],
     chosengame: {type: Schema.Types.ObjectId, ref: "Game"},
     createdAt: {type: Date, default: Date.now},
+    passwordResetToken: {type: String, default: null},
+    passwordResetExpires: {type: Date, default: null},
 });
 
 userSchema.pre("save", async function(next) {

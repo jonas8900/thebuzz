@@ -12,15 +12,8 @@ export default function AddQuestions() {
     const [question, setQuestion] = useState("");
     const [mode, setMode] = useState("truefalse"); 
 
-    if (!data) return null;
 
-    if (data.message) {
-        return (
-        <div className="flex justify-center items-center w-full h-full">
-            <p className="text-red-500">{data.message}</p>
-        </div>
-        );
-    }
+    console.log(data);
 
     if (isLoading) {
         return <Loading/>

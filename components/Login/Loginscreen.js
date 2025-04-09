@@ -81,6 +81,51 @@ export default function LoginScreen({ handleSubmit }) {
     }
   }
 
+
+    async function handleSubmitForgotPassword(event) {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const email = formData.get("email");
+
+      try {
+        const response = await fetch("/api/player/forgot-password", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        if (!response.ok) {
+          setShowError(true);
+          setToastMessage("Fehler beim Senden der E-Mail.");
+          setTimeout(() => {
+            setShowError(false);
+            setToastMessage("");
+          }, 5000);
+          return;
+        }
+
+        setShowSuccess(true);
+        setToastMessage("E-Mail zum Zurücksetzen des Passworts wurde gesendet!");
+        setTimeout(() => {
+          setShowSuccess(false);
+          setToastMessage("");
+          setForgotPassword(false);
+        }, 5000);
+      } catch (error) {
+        setShowError(true);
+        setToastMessage("Es gab einen Fehler. Versuche es später erneut.");
+        setTimeout(() => {
+          setShowError(false);
+          setToastMessage("");
+        }, 5000);
+      }
+    };
+
+
+
   return (
     <div className="relative flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
       <div className=" bg-[url(/images/images.webp)] bg-contain bg-center bg-no-repeat bg-gray-50 h-screen w-full flex items-center justify-center box-shadow-lg dark:bg-gray-900">
@@ -219,7 +264,7 @@ export default function LoginScreen({ handleSubmit }) {
                 </div>
 
                 <div class="mt-5">
-                  <form>
+                  <form onSubmit={handleSubmitForgotPassword}>
                     <div class="grid gap-y-4">
                       <div>
                         <label

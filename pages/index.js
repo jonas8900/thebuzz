@@ -8,7 +8,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
-import JoinGame from "../components/game/JoinGame";
+import JoinGame from "../components/startingPageGameContent/JoinGame";
+import ShowYourGame from "../components/startingPageGameContent/ShowYourGames";
+import useSWR from "swr";
 
 
 const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
@@ -17,10 +19,14 @@ const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756
 });
 
 export default function Home() {
+  const { data, isLoading, mutate} = useSWR("/api/game/getGamesAsPlayer");
   const { data: session, status } = useSession();
   const [timestamps, setTimestamps] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [dynamicData, setDynamicData] = useState('');
+  const [joingameModal, setJoingameModal] = useState(false);
+  const [yourgameModal, setYourgameModal] = useState(false);
+  const [createGameOpen, setCreateGameOpen] = useState(false);
   const router = useRouter();
 
 
@@ -50,6 +56,11 @@ export default function Home() {
     socket.emit("sendTimestamp", timestamp);
   };
 
+  function handleOpenYourGames() {
+    setYourgameModal(true);
+    mutate("/api/game/getGamesAsPlayer");
+  }
+
   const fadeIn = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 1 } },
@@ -64,11 +75,20 @@ export default function Home() {
         variants={fadeIn}
       >
         <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-          <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData}/>
+          <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen}/>
         </motion.div>
         <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.5 }}>
-          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen}/>
-          <JoinGame />
+          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen}/>
+          <div className="flex flex-col items-center justify-center h-screen ">
+            <h1 className="text-4xl font-bold mb-4">Spiel Joinen</h1>
+            <p className="text-lg mb-8">Joine einem bereits bestehendem Spiel.</p>
+            <div className="flex space-x-4">
+                <button className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200" onClick={() => setJoingameModal(!joingameModal)}>Spiel beitreten</button>
+                <button className="px-4 py-2 bg-purple-800 text-white cursor-pointer rounded hover:bg-purple-600 active:bg-violet-500 transition duration-200" onClick={handleOpenYourGames}>Deine Spiele</button>
+            </div>
+        </div>
+          <JoinGame setJoingameModal={setJoingameModal} joingameModal={joingameModal} setYourgameModal={setYourgameModal}/>
+          <ShowYourGame setYourgameModal={setYourgameModal} yourgameModal={yourgameModal}/>
           <div className="absolute bottom-1/4 transform -translate-y-1/2 left-1/2 transform -translate-x-1/2 text-center text-white">
           {/* <button 
             onClick={handleSendTimestamp} 

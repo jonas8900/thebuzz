@@ -12,6 +12,8 @@ const gameSchema = new Schema({
     scores: [{ player: { type: Schema.Types.ObjectId, ref: "User" }, points: { type: Number, default: 0 } }],
     files: [{ type: String }],
     gameOpenedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    started: { type: Boolean, default: false, required: true },
+    finished: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
 });
 
