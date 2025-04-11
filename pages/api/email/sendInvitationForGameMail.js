@@ -36,6 +36,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Einladungslink fehlt." });
   }
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
+  }
+
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",

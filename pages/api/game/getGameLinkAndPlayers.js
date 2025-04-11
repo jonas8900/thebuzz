@@ -17,7 +17,7 @@ export default async function handler(request, response) {
   if(request.method === "POST") {
     try {
 
-        const newInviteLink = process.env.COPYLINK_URL + "?code=" + Math.random().toString(36).substring(2, 16) + "&x=" + id;
+        const newInviteLink = process.env.COPYLINK_URL + "game?code=" + Math.random().toString(36).substring(2, 16) + "&x=" + id;
 
         const game = await Game.findByIdAndUpdate(
             id,

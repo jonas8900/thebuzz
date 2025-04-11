@@ -15,6 +15,7 @@ import Loading from "../Status/Loading";
 
 export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
+    const { data: gameAsPlayer } = useSWR("/api/game/getGamesAsPlayer");
     
     const [activeSection, setActiveSection] = useState( {title: 'Fragen', subItem: 'Anlegen'} );
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -48,14 +49,10 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     if(!data) return null;
 
 
+
  
     if (isLoading) return <Loading/>
    
-
-
-   
-
-
 
 
 

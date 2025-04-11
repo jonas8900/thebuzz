@@ -4,6 +4,8 @@ import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { signOut } from "next-auth/react";
+import Temporaryuser from "../../../db/models/Temporaryuser";
+
 
 const rateLimiter = new RateLimiterMemory({
   points: 5, 
@@ -61,6 +63,42 @@ export const authOptions = {
         };
       },
     }),
+    CredentialsProvider({
+      id: "guest",
+      name: "Gastzugang",
+      credentials: {
+        username: { label: "Username", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          const { username, gameId } = credentials; 
+          if (!username || !gameId) {
+            throw new Error("Username und gameId sind erforderlich");
+          }
+      
+          await dbConnect();
+      
+          let tempUser = await Temporaryuser.findOne({ username });
+          if (!tempUser) {
+            console.log("Erstelle neuen temporären Benutzer...");
+            tempUser = await Temporaryuser.create({ username, yourgame: gameId });
+          }
+      
+          console.log("Temporärer Benutzer:", tempUser);
+      
+          return {
+            id: tempUser._id.toString(),
+            username: tempUser.username,
+            role: "guest",
+            gameId: tempUser.yourgame.toString(), 
+          };
+        } catch (error) {
+          console.error("Fehler im Gastzugang:", error);
+          throw new Error("Fehler beim Erstellen des temporären Benutzers");
+        }
+      }
+    }),      
+    
   ],
   pages: {
     signIn: "/auth/login",
@@ -69,8 +107,8 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
+    maxAge: 30 * 24 * 60 * 60, 
+    updateAge: 24 * 60 * 60, 
   },
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
@@ -81,6 +119,7 @@ export const authOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
     async jwt({ token, user }) {
@@ -90,6 +129,7 @@ export const authOptions = {
         token.role = user.role;
         token.name = user.name;
         token.username = user.username;
+        token.gameId = user.gameId;
       }
       return token;
     },
@@ -99,6 +139,8 @@ export const authOptions = {
       session.user.role = token.role;
       session.user.username = token.username;
       session.user.name = token.name;
+      session.user.gameId = token.gameId;
+      session.user.isGuest = token.role === "guest";
 
       return session;
     },

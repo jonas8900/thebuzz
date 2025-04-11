@@ -23,15 +23,15 @@ export default async function handler(req, res) {
 
   try {
    
-    await User.findByIdAndUpdate(
+    const UserData = await User.findByIdAndUpdate(
         userId,
         { $pull: { yourgames: gameId } },
         { new: true }
       );
 
-    return res.status(201).json({ message: "Game deleted", game: deletedGame });
+    return res.status(201).json({ message: "Game deleted", game: UserData });
   } catch (error) {
-    console.error("Fehler beim Erstellen des Spiels:", error);
-    return res.status(500).json({ message: "Fehler beim Erstellen des Spiels", error: error.message });
+    console.error("Fehler beim löschen des Spiels:", error);
+    return res.status(500).json({ message: "Fehler beim löschen des Spiels", error: error.message });
   }
 }

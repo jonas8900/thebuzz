@@ -89,7 +89,7 @@ export default function LoginScreen({ handleSubmit }) {
       const email = formData.get("email");
 
       try {
-        const response = await fetch("/api/player/forgot-password", {
+        const response = await fetch("/api/admin/forgot-password", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

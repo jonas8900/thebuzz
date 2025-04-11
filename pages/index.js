@@ -13,15 +13,10 @@ import ShowYourGame from "../components/startingPageGameContent/ShowYourGames";
 import useSWR from "swr";
 
 
-const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || "https://thebuzz-cfde756a15ca.herokuapp.com", {
-  path: '/socket.io', 
-  transports: ['websocket', 'polling'], 
-});
 
 export default function Home() {
   const { data, isLoading, mutate} = useSWR("/api/game/getGamesAsPlayer");
   const { data: session, status } = useSession();
-  const [timestamps, setTimestamps] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [dynamicData, setDynamicData] = useState('');
   const [joingameModal, setJoingameModal] = useState(false);
@@ -30,16 +25,6 @@ export default function Home() {
   const router = useRouter();
 
 
-  useEffect(() => {
-    socket.on("receiveTimestamp", (timestamp) => {
-      setTimestamps((prev) => [...prev, timestamp]);
-    });
-
-
-    return () => {
-      socket.off("receiveTimestamp");
-    };
-  }, []);
 
   if (status === "loading") {
     return <Loading />;
@@ -51,10 +36,7 @@ export default function Home() {
 
 
 
-  const handleSendTimestamp = () => {
-    const timestamp = new Date().toLocaleTimeString();
-    socket.emit("sendTimestamp", timestamp);
-  };
+
 
   function handleOpenYourGames() {
     setYourgameModal(true);
@@ -90,17 +72,6 @@ export default function Home() {
           <JoinGame setJoingameModal={setJoingameModal} joingameModal={joingameModal} setYourgameModal={setYourgameModal}/>
           <ShowYourGame setYourgameModal={setYourgameModal} yourgameModal={yourgameModal}/>
           <div className="absolute bottom-1/4 transform -translate-y-1/2 left-1/2 transform -translate-x-1/2 text-center text-white">
-          {/* <button 
-            onClick={handleSendTimestamp} 
-            className="p-2 bg-blue-500 text-white rounded-md shadow-lg "
-          >
-            Send Timestamp
-          </button> */}
-          <ul className="mt-0 text-white">
-            {timestamps.map((timestamp, index) => (
-              <li key={index}>Timestamp received: {timestamp}</li>
-            ))}
-          </ul>
         </div>
         </motion.div>
         

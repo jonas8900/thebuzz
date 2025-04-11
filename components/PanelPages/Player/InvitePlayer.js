@@ -154,7 +154,7 @@ export default function InvitePlayer() {
                     <h1 className="text-2xl font-bold mb-4">Spieler Hinzufügen:</h1>
                     <p className="text-sm text-gray-500 pb-4 dark:text-gray-400">an die eingegebene Email-Adresse wird ein Einladungslink verschickt, damit der Spieler dem Spiel beitreten kann.</p>
                     <form className="flex flex-col space-y-4" onSubmit={handleSendInvite}>
-                    {game?.admin.some(item => item._id === session.user.id) ? (
+                    {game?.admin?._id === session.user.id ? (
                       <>
                         <div className="relative w-full h-12">
                           <input
@@ -199,7 +199,7 @@ export default function InvitePlayer() {
                             readOnly
                             className="w-full bg-gray-200 dark:bg-gray-800 text-black dark:text-white p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
                         />
-                        {game?.admin.some(item => item._id === session.user.id) && (
+                        {game?.admin?._id === session.user.id && (
                           <button className="bg-blue-500 text-white p-2 rounded" onClick={handleGenerateLink}>Generieren</button>
                         )}
                         

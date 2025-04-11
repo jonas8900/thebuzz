@@ -31,6 +31,22 @@ export default function ShowYourGame({ setYourgameModal, yourgameModal }) {
         }
       }
 
+    async function handleJoinActiveGame(gameId) {
+
+      const response = await fetch("/api/game/joinActiveGameAsPlayer", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ gameId }),
+      });
+
+      
+
+    }
+
+        
+
       async function handleDeleteGameAsPlayer(gameId) {
         const response = await fetch("/api/game/deleteGameAsPlayer", {
             method: "POST",

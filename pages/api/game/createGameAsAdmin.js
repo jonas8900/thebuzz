@@ -27,7 +27,7 @@ export default async function handler(req, res) {
    
     const newGame = await Game.create({
       name: name,     
-      admin: [userId],   
+      admin: userId,   
       started: false, 
     });
 

@@ -40,7 +40,7 @@ export default function ResetPassword() {
 
     try {
       const { token } = router.query;
-      const response = await fetch("/api/player/reset-password", {
+      const response = await fetch("/api/admin/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -223,7 +223,7 @@ export default function AddGame() {
                                 {data.length === 1 && (
                                 <button
                                     onClick={() => handleChangeGame(game._id)}  
-                                    className="px-4 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200"
+                                    className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200"
                                 >
                                     Wechseln
                                 </button> 
@@ -256,14 +256,14 @@ export default function AddGame() {
                                 <span>{game.name}</span>
 
                                 <div className="space-x-2">
-                                {data.length === 1 && (
+
                                 <button
                                     onClick={() => handleChangeGame(game._id)}  
                                     className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200"
                                 >
                                     Wechseln
                                 </button> 
-                                )}
+
                                
 
                                 <button
