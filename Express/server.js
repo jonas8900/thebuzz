@@ -43,7 +43,6 @@ app.prepare().then(() => {
 
   server.use(cors());
 
-  // API-Route, um das Spiel mit einer ID abzurufen
   server.get("/api/gamemechanic/getGameById", async (req, res) => {
     const { x: gameId } = req.query;
     try {
@@ -55,33 +54,27 @@ app.prepare().then(() => {
     }
   });
 
-  // Speichert aktive Spieler in einem Objekt
   const activePlayers = {};
 
   io.on("connection", (socket) => {
     console.log(`🟢 Client verbunden: ${socket.id}`);
 
-    // Event, wenn ein Spieler einem Spiel beitritt
     socket.on('joinGame', async ({ gameId, playerId, username }) => {
 
-      // Hole das Spiel anhand der Game-ID
       const game = await Game.findById(gameId);
       if (!game) {
         socket.emit('error', { message: "Game not found" });
         return;
       }
 
-      // Füge den Spieler zur Spieler-Liste im Spiel hinzu, wenn er noch nicht da ist
       if (!game.players.includes(playerId)) {
         game.players.push(playerId);
         await game.save();
       }
 
-      // Speichere den Socket für den aktiven Spieler
       activePlayers[playerId] = { socketId: socket.id, username };
 
 
-      // Erstelle eine Liste aller aktiven Spieler
       const activePlayerIds = Object.keys(activePlayers);
       const activeGamePlayers = game.players
         .filter(player => activePlayerIds.includes(player.toString()))
@@ -90,40 +83,32 @@ app.prepare().then(() => {
           return { username: playerSocket.username };
         });
 
-      // Sende die aktiven Spieler an alle Clients
       io.emit('activePlayers', {
         gameId,
         players: activeGamePlayers,
       });
     });
 
-    // Event, wenn ein Spieler das Spiel verlässt (disconnect)
     socket.on('disconnect', async () => {
       const playerId = Object.keys(activePlayers).find(key => activePlayers[key].socketId === socket.id);
     
       if (playerId) {
-        // Entferne den Spieler aus der aktiven Liste
+
         delete activePlayers[playerId];
     
-        // Logge das aktive Spieler-Objekt
-        console.log(activePlayers); // Dies zeigt dir das gesamte Objekt
     
-        // Finde das Spiel, in dem der Spieler war
         const game = await Game.findOne({ players: playerId });
     
         if (game) {
-          // Entferne den Spieler aus der 'players' Liste des Spiels
           game.players = game.players.filter(player => !player.equals(playerId));
           await game.save();
     
-          // Hole die aktuellen aktiven Spieler
           const activeGamePlayers = game.players
             .map(playerId => {
               const playerSocket = activePlayers[playerId];
               return { username: playerSocket?.username };
             });
     
-          // Sende die aktualisierte Liste der aktiven Spieler an alle Clients
           io.emit('activePlayers', {
             gameId: game._id,
             players: activeGamePlayers,
@@ -134,7 +119,6 @@ app.prepare().then(() => {
     
   });
 
-  // Stelle sicher, dass Next.js die Anfrage korrekt bearbeitet
   server.all("*", (req, res) => handle(req, res));
 
   httpServer.listen(PORT, () => {

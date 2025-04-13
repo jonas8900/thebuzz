@@ -5,10 +5,8 @@ import useSWR from "swr";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import io from "socket.io-client";
+import { usePlayerSocket } from "../context/playerContext";
 
-const socket = io(
-  process.env.NEXT_PUBLIC_SERVER_URL || "https://dein-server-url"
-);
 
 export default function GamePanel() {
   const router = useRouter();
@@ -19,7 +17,7 @@ export default function GamePanel() {
   const [toastMessage, setToastMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [players, setPlayers] = useState([]);
+  const { players, socket } = usePlayerSocket(); 
   const { data: gameByID, isLoading } = useSWR(
     isReady && queryId ? `/api/gamemechanic/getGameById?x=${queryId}` : null
   );
@@ -33,16 +31,17 @@ export default function GamePanel() {
     }
   }, [gameByID, session]);
 
-  useEffect(() => {
-    socket.on("activePlayers", ({ gameId, players }) => {
-      setPlayers(players);
-    });
-
-    return () => {
-      socket.off("activePlayers");
-    };
-  }, []);
   console.log(players);
+
+  // useEffect(() => {
+  //   socket.on("activePlayers", ({ gameId, players }) => {
+  //     setPlayers(players);
+  //   });
+
+  //   return () => {
+  //     socket.off("activePlayers");
+  //   };
+  // }, []);
 
   return (
     <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">

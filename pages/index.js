@@ -34,8 +34,9 @@ export default function Home() {
     router.push("/auth/login");
   }
 
-
-
+  if(session?.user?.isGuest) {
+    router.push("/auth/login");
+  }
 
 
   function handleOpenYourGames() {
@@ -60,7 +61,7 @@ export default function Home() {
           <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen}/>
         </motion.div>
         <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.5 }}>
-          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen}/>
+          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen} />
           <div className="flex flex-col items-center justify-center h-screen ">
             <h1 className="text-4xl font-bold mb-4">Spiel Joinen</h1>
             <p className="text-lg mb-8">Joine einem bereits bestehendem Spiel.</p>

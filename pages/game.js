@@ -34,7 +34,6 @@ export default function Game() {
   );
 
 
-  console.log(gameByID);
 
 
   useEffect(() => {
@@ -112,17 +111,6 @@ export default function Game() {
 
       localStorage.setItem("gameId", gameByID._id);
       localStorage.setItem("username", userData.Username);
-  
-      
-      // const alreadyIn = currentPlayers.includes(userData.Username);
-      // const updatedPlayers = alreadyIn
-      //   ? currentPlayers
-      //   : [...currentPlayers, userData.Username];
-  
-      // socket.emit("updateActivePlayers", {
-      //   gameId: gameByID._id,
-      //   players: updatedPlayers,
-      // });
   
       setShowSuccess(true);
       setToastMessage("Spiel beigetreten und eingeloggt! 🎉");

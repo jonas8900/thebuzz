@@ -13,7 +13,7 @@ import InvitePlayer from "../PanelPages/Player/InvitePlayer";
 import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
 
-export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen}) {
+export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
     const { data: gameAsPlayer } = useSWR("/api/game/getGamesAsPlayer");
     
@@ -141,7 +141,7 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                             {Array.isArray(data) && data.length > 0 && (
                                 <select 
                                     className="p-2 mt-2 border w-full rounded bg-gray-50 dark:bg-gray-800 text-black dark:text-white "
-                                    onChange={(e) => handleChangeGame(e.target.value)}  // `e.target.value` ist die game.id
+                                    onChange={(e) => handleChangeGame(e.target.value)}  
                                     >
                                         {data.map((game) => (
                                             <option key={game._id} value={game._id} className="p-2">
@@ -160,7 +160,7 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                   </div>
   
 
-                  <div className="w-full lg:w-full h-full p-8">
+                  <div className="w-full lg:w-full h-full p-8  overflow-y-scroll ">
                     {activeSection.title === 'Fragen' && activeSection.subItem === 'Anlegen' && <AddQuestions/>}
                     {activeSection.title === 'Fragen' && activeSection.subItem === 'Anzeigen' && <ShowQuestions/>}
 
@@ -173,8 +173,6 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                   </div>
 
               </motion.div>
-
-        
 
             )}
             {panelOpen & dynamicData === 'statistic' && (
