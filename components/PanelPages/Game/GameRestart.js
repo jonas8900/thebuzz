@@ -6,7 +6,7 @@ import SuccessMessage from "../../Toast/SuccessMessage";
 import useSWR, { mutate } from "swr";
 import Loading from "../../Status/Loading";
 
-export default function AddGame() {
+export default function GameRestart() {
     const { data: session } = useSession();
     const router = useRouter();
     const [toastMessage, setToastMessage] = useState("");
@@ -22,48 +22,9 @@ export default function AddGame() {
  
     if (isLoading) return <Loading/>;
 
-    async function handleAddGame(event) {
-        event.preventDefault();
-
-        const formData = new FormData(event.target);
-        const Data = Object.fromEntries(formData.entries());
-
-        const gameName = formData.get("gameName");
-
-        const response = await fetch("/api/game/createGameAsAdmin", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ name: gameName }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            setShowError(true);
-            setToastMessage("Etwas ist schiefgelaufen!");
-            setTimeout(() => {
-              setShowError(false);
-              setToastMessage("");
-            }, 3000);
-            return;
-          }
-      
-          if (response.ok) {
-            setShowSuccess(true);
-            setToastMessage("Spiel erstellt! 🎉");
-            mutate("/api/game/getGames"); 
-            setTimeout(() => {
-              setShowSuccess(false);
-              setToastMessage("");
-            }, 3000);
-          } else {
-            alert("Etwas ist schiefgelaufen, versuche es später noch einmal.");
-          }
-    }
-
     async function handleDeleteGame(gameId) {
+
+
         const response = await fetch("/api/game/deleteGame", {
             method: "POST",
             headers: {
@@ -94,7 +55,6 @@ export default function AddGame() {
           } else {
             alert("Etwas ist schiefgelaufen, versuche es später noch einmal.");
           }
-
     }
 
     async function handleChangeGame(selectedGameId) {
@@ -130,6 +90,10 @@ export default function AddGame() {
           }
     }
 
+    async function handleResetGame(e) {
+        e.preventDefault();
+    }
+
     
 
     return(
@@ -140,7 +104,7 @@ export default function AddGame() {
 
             <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 pt-12 rounded-lg overflow-y-auto">
                 <h1 className="text-2xl font-bold mb-4">Neues Spiel hinzufügen</h1>
-                <form className="flex flex-col space-y-4" onSubmit={handleAddGame}>
+                <form className="flex flex-col space-y-4" onSubmit={handleResetGame}>
                 <div className="relative w-full h-12">
                     <input
                         type="text"

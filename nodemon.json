@@ -1,0 +1,13 @@
+{
+  "watch": ["Express/server.js", "db"],
+  "ignore": [
+    "components/**",
+    "pages/**",
+    "styles/**",
+    "public/**",
+    ".next/**",
+    "node_modules/**"
+  ],
+  "ext": "js,json",
+  "exec": "node Express/server.js"
+}

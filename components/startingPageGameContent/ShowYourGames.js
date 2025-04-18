@@ -47,39 +47,7 @@ export default function ShowYourGame({ setYourgameModal, yourgameModal }) {
 
         
 
-      async function handleDeleteGameAsPlayer(gameId) {
-        const response = await fetch("/api/game/deleteGameAsPlayer", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ gameId }),
-        });
 
-        if (!response.ok) {
-            setShowError(true);
-            setToastMessage("Etwas ist schiefgelaufen!");
-            setTimeout(() => {
-              setShowError(false);
-              setToastMessage("");
-            }, 3000);
-            return;
-          }
-      
-          if (response.ok) {
-            setShowSuccess(true);
-            setToastMessage("Spiel gelöscht! 🎉");
-            mutate("/api/game/getGamesAsPlayer"); 
-            mutate("/api/game/getChosenGame");
-            setTimeout(() => {
-              setShowSuccess(false);
-              setToastMessage("");
-            }, 3000);
-          } else {
-            alert("Etwas ist schiefgelaufen, versuche es später noch einmal.");
-          }
-
-    }
 
     return (
         <>
@@ -118,13 +86,6 @@ export default function ShowYourGame({ setYourgameModal, yourgameModal }) {
                                                   className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200"
                                               >
                                                   Beitreten
-                                              </button>
-
-                                              <button
-                                                  onClick={() => handleDeleteGameAsPlayer(game._id)}  
-                                                  className="px-4 py-2 bg-red-500 text-white cursor-pointer rounded hover:bg-red-600 active:bg-blue-900 transition duration-200"
-                                              >
-                                                  Löschen
                                               </button>
                                               </div>
                                           </li>

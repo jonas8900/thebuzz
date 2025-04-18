@@ -6,14 +6,21 @@ const gameSchema = new Schema({
 
     name: { type: String, required: true },
     admin: { type: Schema.Types.ObjectId, ref: "User" },
-    players: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    players: [{
+        playerId: { type: Schema.Types.ObjectId, ref: "Temporaryuser" },
+        username: { type: String, required: true }
+    }],
+    gamemode: { type: String, enum: ["random", "buzzergame", "lowtohigh", 'sorted'], default: "random" },
     currentplayer: [{ type: Schema.Types.ObjectId, ref: "User" }],
     questions: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     invitelink: { type: String },
     scores: [{ player: { type: Schema.Types.ObjectId, ref: "User" }, points: { type: Number, default: 0 } }],
     files: [{ type: String }],
     started: { type: Boolean, default: false, required: true },
+    joinstopped: { type: Boolean, default: false },
+    currentQuestionIndex: { type: Number, default: 0 },
     finished: { type: Boolean, default: false },
+    blockedips: [{ type: String }],
     createdAt: { type: Date, default: Date.now },
 });
 

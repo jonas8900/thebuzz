@@ -3,6 +3,8 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
 import Game from "../../../db/models/Game";
+import Temporaryuser from "../../../db/models/Temporaryuser";
+import Task from "../../../db/models/Task";
 
 
 export default async function handler(req, res) {
@@ -24,6 +26,10 @@ export default async function handler(req, res) {
    
     const deletedGame = await Game.findByIdAndDelete(gameId);
 
+    const temporaryUser = await Temporaryuser.deleteMany({yourgame: gameId});
+
+    const questions = await Task.deleteMany({gameId: gameId});
+
     if (!deletedGame) {
       return res.status(404).json({ message: "Game not found" });
     }
@@ -33,7 +39,7 @@ export default async function handler(req, res) {
         { $pull: { yourgames: gameId } } 
       );
 
-    return res.status(201).json({ message: "Game deleted", game: deletedGame });
+    return res.status(201).json({ message: "Game deleted", game: deletedGame, temporaryUser, questions });
   } catch (error) {
     console.error("Fehler beim Erstellen des Spiels:", error);
     return res.status(500).json({ message: "Fehler beim Erstellen des Spiels", error: error.message });

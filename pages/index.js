@@ -15,7 +15,6 @@ import useSWR from "swr";
 
 
 export default function Home() {
-  const { data, isLoading, mutate} = useSWR("/api/game/getGamesAsPlayer");
   const { data: session, status } = useSession();
   const [panelOpen, setPanelOpen] = useState(false);
   const [dynamicData, setDynamicData] = useState('');
@@ -39,10 +38,6 @@ export default function Home() {
   }
 
 
-  function handleOpenYourGames() {
-    setYourgameModal(true);
-    mutate("/api/game/getGamesAsPlayer");
-  }
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -67,7 +62,7 @@ export default function Home() {
             <p className="text-lg mb-8">Joine einem bereits bestehendem Spiel.</p>
             <div className="flex space-x-4">
                 <button className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200" onClick={() => setJoingameModal(!joingameModal)}>Spiel beitreten</button>
-                <button className="px-4 py-2 bg-purple-800 text-white cursor-pointer rounded hover:bg-purple-600 active:bg-violet-500 transition duration-200" onClick={handleOpenYourGames}>Deine Spiele</button>
+                <button className="px-4 py-2 bg-purple-800 text-white cursor-pointer rounded hover:bg-purple-600 active:bg-violet-500 transition duration-200">Deine Spiele</button>
             </div>
         </div>
           <JoinGame setJoingameModal={setJoingameModal} joingameModal={joingameModal} setYourgameModal={setYourgameModal}/>

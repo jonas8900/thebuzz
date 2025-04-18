@@ -12,6 +12,8 @@ import ShowQuestions from "../PanelPages/Questions/ShowQuestion";
 import InvitePlayer from "../PanelPages/Player/InvitePlayer";
 import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
+import GameSettings from "../PanelPages/Game/GameSettings";
+import GameRestart from "../PanelPages/Game/GameRestart";
 
 export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
@@ -27,7 +29,7 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     const menuItems = [
         { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
         { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
-        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
+        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen', 'Neustart'] },
     ];
 
 
@@ -48,13 +50,8 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
 
     if(!data) return null;
 
-
-
- 
     if (isLoading) return <Loading/>
    
-
-
 
     async function handleChangeGame(selectedGameId) {
         const response = await fetch("/api/game/changeGame", {
@@ -92,13 +89,11 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
             {panelOpen & dynamicData === "admin" && (
                   
                   <motion.div 
-                  className="absolute top-1/2 left-1/2 lg:w-1/2 lg:h-3/4 w-full h-full flex border bg-gray-100 rounded-2xl shadow-xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden dark:bg-gray-900"
-                  
+                    className="absolute top-1/2 left-1/2 lg:w-1/2 lg:h-3/4 w-full h-full flex border bg-gray-100 rounded-2xl shadow-xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden dark:bg-gray-900"
                     initial={{ opacity: 0, scale: 0.8, x: -300}}
                     animate={{ opacity: 1, scale: 1  , x: 0 }}
                     exit={{ opacity: 0, scale: 0.8  , x: -300 }}
                     transition={{ duration: 0.2 }}
-
                   >
                   <button
                       className="absolute top-4 right-4 lg:hidden z-50 p-2 bg-blue-500 text-white rounded-full"
@@ -169,7 +164,8 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
 
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Starten' && <StartGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Erstellen' && <AddGame/>}
-                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Einstellungen' && <div>Spiel Einstellungen Inhalt</div>}
+                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Einstellungen' && <GameSettings/>}
+                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Neustart' && <GameRestart/>}
                   </div>
 
               </motion.div>

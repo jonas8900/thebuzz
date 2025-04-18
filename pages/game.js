@@ -33,21 +33,12 @@ export default function Game() {
     isReady && queryId ? `/api/gamemechanic/getGameById?x=${queryId}` : null
   );
 
-
-
-
   useEffect(() => {
     if (session && session.user.gameId !== queryId && session.user.isGuest) {
       signOut({ redirect: false });
     }
   }, [session, queryId]);
 
-
-
-
-  if(!gameByID) {
-    return <h1 className="absolute top-1/2 right-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-gray-800 dark:text-white">Spiel wurde nicht gefunden! Link ist eventuell ungültig</h1>;
-  }
 
   if (session && gameByID) {
     amIAdmin = session?.user?.id === gameByID?.admin;
@@ -56,7 +47,11 @@ export default function Game() {
   }
 
 
-  if (isLoading) return <Loading />;
+  if (isLoading || !isReady) return <Loading />;
+
+  if(!gameByID) {
+    return <h1 className="absolute top-1/2 right-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-gray-800 dark:text-white">Spiel wurde nicht gefunden! Link ist eventuell ungültig</h1>;
+  }
 
 
   async function handleJoinGame(e) {

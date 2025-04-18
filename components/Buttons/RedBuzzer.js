@@ -1,4 +1,6 @@
 export default function BigRedBuzzer({ onClick }) {
+  
+
     return (
       <div className="absolute flex items-center justify-center bg-transparent h-full w-full">
         <button

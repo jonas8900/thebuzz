@@ -2,6 +2,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../db/connect";
 import Game from "../../../db/models/Game";
+import Task from "../../../db/models/Task";
+import Temporaryuser from "../../../db/models/Temporaryuser";
+import User from "../../../db/models/User";
 
 export default async function handler(request, response) {
   await dbConnect();
@@ -14,8 +17,13 @@ export default async function handler(request, response) {
         return response.status(400).json({ error: "ID ist erforderlich" });
       }
 
-      const game = await Game.findById(x);
+  
+      const game = await Game.findById(x).populate("questions").lean();
+      
+      console.log("API getGameById called with", x);
 
+
+  
       return response.status(200).json(game);
     } catch (error) {
       console.error("Fehler beim Abrufen der Spiele:", error);

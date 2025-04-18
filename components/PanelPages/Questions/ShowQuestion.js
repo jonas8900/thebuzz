@@ -4,13 +4,18 @@ import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import Loading from "../../Status/Loading";
 import { motion, AnimatePresence } from "framer-motion";
+import ErrorMessage from "../../Toast/ErrorMessage";
+import SuccessMessage from "../../Toast/SuccessMessage";
 
 export default function AddQuestions() {
     const { data: session } = useSession();
-    const { data, isLoading } = useSWR("/api/game/getChosenGame");
+    const { data, isLoading, mutate } = useSWR("/api/game/getChosenGame");
     const [answers, setAnswers] = useState([""]);
     const [openAnswers, setOpenAnswers] = useState(false);
     const [modalopen, setModalOpen] = useState(false);
+    const [toastMessage, setToastMessage] = useState("");
+    const [showError, setShowError] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
     const [question, setQuestion] = useState("");
     const [mode, setMode] = useState("truefalse"); 
     const overlayJoinRef = useRef(null);
@@ -45,6 +50,36 @@ export default function AddQuestions() {
         setOpenAnswers(true);
     }
 
+    async function handleDeleteQuestion(id) {
+        const response = await fetch("/api/game/questions/deleteQuestion", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id }),
+        });
+
+
+        if (response.ok) {
+            setShowSuccess(true);
+            setToastMessage("Frage gelöscht! 🎉")
+            setTimeout(() => {
+                setShowSuccess(false);
+                setToastMessage("");
+            }, 3000);
+            mutate("/api/game/getChosenGame");
+        }
+        else {
+            setShowError(true);
+            setToastMessage("Etwas ist schiefgelaufen!");
+            setTimeout(() => {
+                setShowError(false);
+                setToastMessage("");
+            }, 3000);
+            mutate("/api/game/getChosenGame");
+        }
+
+    }
 
 
     return (
@@ -68,24 +103,33 @@ export default function AddQuestions() {
                                         {data.chosenGame.questions.map((question) => {
                                         
                                         return( 
-                                                <div key={question._id} className="flex flex-col gap-2 w-full h-full p-4 border border-gray-300 rounded-lg shadow-md">
-                                                        <p className="text-gray-200 font-bold">{question.question}</p>
-                                                        {question.answers && question.answers.length > 0 && (
-                                                            <ul className="list-disc pl-5">
-                                                                {question.answers.map((answer, index) => (
-                                                                    <li key={index} className="text-gray-200">{answer}</li>
-                                                                ))}
-                                                            </ul>
-                                                        )}
-                                                        {question.correctanswer && (
-                                                            <>
-                                                                {question.mode === "multiple" ? (
-                                                                    <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
-                                                                ) : (
-                                                                    <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
-                                                                )}
-                                                            </>
-                                                        )}
+                                              <div key={question._id} className="relative flex flex-col gap-2 w-full h-full p-4 border border-gray-300 rounded-lg shadow-md">
+                                                    <button
+                                                        onClick={() => handleDeleteQuestion(question._id)}
+                                                        className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 px-3 py-1 rounded"
+                                                    >
+                                                        Löschen
+                                                    </button>
+
+                                                    <p className="text-gray-200 font-bold">{question.question}</p>
+
+                                                    {question.answers && question.answers.length > 0 && (
+                                                        <ul className="list-disc pl-5">
+                                                            {question.answers.map((answer, index) => (
+                                                                <li key={index} className="text-gray-200">{answer}</li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+
+                                                    {question.correctanswer && (
+                                                        <>
+                                                            {question.mode === "multiple" ? (
+                                                                <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
+                                                            ) : (
+                                                                <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -154,6 +198,8 @@ export default function AddQuestions() {
                         )}
                 </div>
         </div>
+            {showError && <ErrorMessage message={toastMessage} />}
+            {showSuccess && <SuccessMessage message={toastMessage} />}
         </div>
     );
 }
