@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-  "node": "20.x"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -15,6 +15,7 @@
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
+    "@tailwindcss/oxide": "4.1.4",
     "babel": "^6.23.0",
     "bcryptjs": "^3.0.2",
     "canvas-confetti": "^1.9.3",
