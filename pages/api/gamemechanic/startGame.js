@@ -1,7 +1,8 @@
-import dbConnect from "@/lib/mongoose";
-import Game from "@/models/Game";
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
+import Game from "../../../db/models/Game";
+import dbConnect from "../../../db/connect";
 
 export default async function handler(req, res) {
 
