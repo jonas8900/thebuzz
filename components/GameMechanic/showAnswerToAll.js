@@ -80,7 +80,7 @@ export default function ShowAnswerToAll({ answer, players, onClick, isAdmin, que
                     ))
                 ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-300 italic">
-                    Niemand hat's gewusst 😅
+                    Niemand hat&apos;s gewusst 😅
                 </p>
                 )}
             </div>
@@ -106,7 +106,7 @@ export default function ShowAnswerToAll({ answer, players, onClick, isAdmin, que
                     ))
                 ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-300 italic">
-                    Niemand hat's gewusst 😅
+                    Niemand hat&apos;s gewusst 😅
                 </p>
                 )}
             </div>
