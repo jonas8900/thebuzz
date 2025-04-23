@@ -16,6 +16,7 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
 
+    console.log(gameByID.admin);
 
 
     useEffect(() => {
@@ -48,11 +49,20 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
         setSelectedAnswer(null);
       }
+      if (currentQuestion.mode === "truefalse") {
+          const answer = {
+              playerId: session?.user.id,
+              username: session?.user.username,
+              answer: event,
+          };
+          socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
+          setSelectedAnswer(null);
+      }
     }
 
-
-
     return (
+      <>
+      {!gameByID?.finished ? (
       <>
         {gameByID?.started ? (
           <>
@@ -160,8 +170,39 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
                       );})}
                   </div>
                 )}
+                {currentQuestion.mode === "truefalse" && (
+                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                      {["Wahr", "Falsch"].map((label, index) => {
+                        const boolValue = label === "Wahr";
+                        const foundAnswer = currentQuestion.playeranswers.find(
+                          (answer) => answer.playerId === session?.user.id
+                        );
+                        const playerGivenAnswer = foundAnswer?.answer;
+
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => handleAnswer(boolValue)}
+                            disabled={!!foundAnswer}
+                            className={`w-full cursor-pointer bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 
+                              ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
+                              ${playerGivenAnswer === boolValue ? "bg-green-600 hover:bg-green-600" : "hover:bg-gray-700"}
+                            `}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {currentQuestion.mode === "buzzer" && (
+                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                        
+                    </div>
+                  )}
               </motion.div>
             </div>
+
 
 
           </>
@@ -224,10 +265,27 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
             players={currentQuestion.playeranswers}
             question={currentQuestion}
             isAdmin={gameByID.admin === session?.user?.id}
+            game={gameByID}
           />
 
         )}
       </>
+    ) : (
+      <>
+        <motion.div
+          className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+            <h2 className="text-3xl font-bold mb-6">Spiel beendet 🎉</h2>
+            <p className="text-lg text-gray-300 mb-4">Vielen Dank fürs Mitspielen!</p>
+            <p className="text-md text-gray-400">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
+
+        </motion.div>
+      </>
+    )}
+  </>
     );
   }
   

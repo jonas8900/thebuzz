@@ -89,6 +89,8 @@ export default function StartGame() {
         window.open(url, '_blank');
     }
 
+
+
     return (
         <>
           {showError && <ErrorMessage message={toastMessage} />}

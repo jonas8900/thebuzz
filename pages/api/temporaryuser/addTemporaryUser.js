@@ -37,9 +37,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: "Game not found" });
     }
 
-    if(game.players.length > 5) {
-      return res.status(400).json({ message: "Game is full" });
-    }
+    // if(game.players.length > 5) {
+    //   return res.status(400).json({ message: "Game is full" });
+    // }
 
     if (game.joinstopped) {
       return res.status(400).json({ message: "Admin stopped joining" });

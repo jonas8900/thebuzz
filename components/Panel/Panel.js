@@ -13,7 +13,7 @@ import InvitePlayer from "../PanelPages/Player/InvitePlayer";
 import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
 import GameSettings from "../PanelPages/Game/GameSettings";
-import GameRestart from "../PanelPages/Game/GameRestart";
+
 
 export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
@@ -29,7 +29,7 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     const menuItems = [
         { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
         { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
-        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen', 'Neustart'] },
+        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
     ];
 
 
@@ -165,7 +165,6 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Starten' && <StartGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Erstellen' && <AddGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Einstellungen' && <GameSettings/>}
-                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Neustart' && <GameRestart/>}
                   </div>
 
               </motion.div>

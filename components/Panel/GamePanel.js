@@ -144,6 +144,8 @@ export default function GamePanel() {
     }
   }
 
+  console.log(game)
+
   return (
     <>
      <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
@@ -215,7 +217,7 @@ export default function GamePanel() {
           lockedPlayers[playerKey]?.locked ? "bg-violet-700" : "bg-gray-600"
         } p-2 rounded-md cursor-move mb-2`}
       >
-        {player.username}
+        {player.username} {player.points}
         <button
           onClick={() => toggleLock(playerKey)}
           className="ml-2 px-2 py-1 bg-white text-black rounded"

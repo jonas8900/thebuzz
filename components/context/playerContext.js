@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 const PlayerSocketContext = createContext();
 
 export const socket = io(
-    process.env.NEXT_PUBLIC_SERVER_URL || "https://dein-server-url"
+    process.env.NEXT_PUBLIC_SERVER_URL
 );
 
 export default function PlayerSocketProvider({ children }) {

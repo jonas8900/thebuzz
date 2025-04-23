@@ -158,6 +158,7 @@ export default function AddQuestions() {
 
     return (
         <>
+        {chosenGame ? (
             <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 rounded-lg">
                 <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
                     <div className="lg:w-full w-1/2 left-0 pr-0 bg-gray-100 dark:bg-gray-900">
@@ -551,6 +552,13 @@ export default function AddQuestions() {
                     <button type="submit" className="bg-blue-500 text-white p-2 mb-8 rounded">Frage hinzufügen</button>
                 </form>
             </div>
+            ) : (
+                <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 rounded-lg">
+                    <h1 className="text-2xl font-bold mb-4">Kein Spiel ausgewählt</h1>
+                    <p className="text-gray-500">Bitte wähle ein Spiel aus, um Fragen hinzuzufügen.</p>
+                    <p className="text-gray-500">Gehe dazu in Spiel Erstellen und wähle das Spiel aus oder wähle im Menüpunkt das aktuelle Spiel aus, wenn du mehr als ein Spiel hast.</p>
+                </div>
+            )}
                   {showError && <ErrorMessage message={toastMessage} />}
                   {showSuccess && <SuccessMessage message={toastMessage} />}
         </>

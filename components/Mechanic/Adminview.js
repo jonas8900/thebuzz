@@ -1,35 +1,32 @@
 
 import { motion } from "framer-motion";
 import QuestionView from "./QuestionView";
-import { usePlayerSocket } from "../context/playerContext";
 import { useEffect, useState } from "react";
+import { usePlayerSocket } from "../context/playerContext";
 
 
 export default function AdminView({   
     players,
-    lockedPlayers,
-    setLockedPlayers,
-    toggleLock,
     gameByID,
     handleStartGame,
     session,
-    handleNextQuestion,
     showrightAnswer,
     setShowRightAnswer,
 }) {
     const { socket } = usePlayerSocket();
-    const [game, setGame] = useState(null);
 
-    if(!game) {
-      setGame(gameByID);
+
+    function handleRestartGame() {
+        setShowRightAnswer(false);
+
+        socket.emit("restartGame", { gameId: gameByID._id });
     }
-  
 
 
     return(
             <>
                 <>
-                {!game?.started && (
+                {!gameByID?.started && (
                   <>
                 <div className="absolute left-10 top-10 w-1/4 bg-gray-800 p-4 rounded-xl">
                   <h2 className="text-xl font-semibold mb-4">Wartende Spieler</h2>
@@ -58,32 +55,22 @@ export default function AdminView({
                 </> 
                   )}
 
-                  {game?.started && (
+                  {gameByID?.started && (
                     <>
                       <QuestionView 
                         gameId={gameByID?._id} 
-                        questions={game?.questions} 
+                        questions={gameByID?.questions} 
                         currentQuestionIndex={gameByID?.currentQuestionIndex} 
-                        game={game} 
+                        game={gameByID} 
                         showrightAnswer={showrightAnswer} 
                         setShowRightAnswer={setShowRightAnswer}
+                        onClickRestart={handleRestartGame}
                         
                         />
                     </>
                   )}
                   
-                  {game?.started && game?.questions.length > 0 && (
 
-                    <div className="flex flex-col absolute bottom-10 w-1/2">
-
-                      <button
-                        onClick={handleNextQuestion}
-                        className="items-center m-auto px-4 py-2 bg-blue-600 rounded-md mt-6 hover:bg-blue-700 transition"
-                      >
-                        Nächste Frage
-                      </button>
-                    </div>
-                  )}
                 </>
               
           

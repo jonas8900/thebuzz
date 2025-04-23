@@ -95,6 +95,8 @@ export default function GameSettings() {
     setSortedQuestions(game.questions);
   }
 
+
+
   return (
     <>
       {game?.gamemode && game?.questions.length ? (

@@ -14,7 +14,13 @@ const gameSchema = new Schema({
     currentplayer: [{ type: Schema.Types.ObjectId, ref: "User" }],
     questions: [{ type: Schema.Types.ObjectId, ref: "Task" }],
     invitelink: { type: String },
-    scores: [{ player: { type: Schema.Types.ObjectId, ref: "User" }, points: { type: Number, default: 0 } }],
+    scores: [{
+        date: { type: Date, default: Date.now },
+        results: [{
+          player: { type: Schema.Types.ObjectId, ref: "Temporaryuser" },
+          points: { type: Number, default: 0 }
+        }]
+      }],
     files: [{ type: String }],
     started: { type: Boolean, default: false, required: true },
     joinstopped: { type: Boolean, default: false },

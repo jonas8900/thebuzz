@@ -19,6 +19,10 @@ export default function AddGame() {
     if(!session) {
         router.push("/auth/login");
     };
+
+    if(!data) {
+        return null;
+    }
  
     if (isLoading) return <Loading/>;
 
@@ -130,13 +134,15 @@ export default function AddGame() {
           }
     }
 
-    
+    console.log("ChosenGame", chosenGame, "Data", data);
 
     return(
         <>
     
             {showError && <ErrorMessage message={toastMessage} />}
             {showSuccess && <SuccessMessage message={toastMessage} />}
+
+            {data || chosenGame ? (
 
             <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 pt-12 rounded-lg overflow-y-auto">
                 <h1 className="text-2xl font-bold mb-4">Neues Spiel hinzufügen</h1>
@@ -205,7 +211,11 @@ export default function AddGame() {
                 </div>
                
             </div>
-
+            ) : (
+                <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 pt-12 rounded-lg overflow-y-auto">
+                    <h1 className="text-2xl font-bold mb-4">Keine Spieldaten</h1>
+                </div>
+            )}
         </>
     )
 }

@@ -8,7 +8,6 @@ const dotenv = require("dotenv");
 const crypto = require("crypto");  
 dotenv.config({ path: ".env.local" });
 
-
 function hashIp(ip) {
   return crypto.createHash("sha256").update(ip).digest("hex");
 }
@@ -16,15 +15,22 @@ function hashIp(ip) {
 async function emitGameUpdate(io, gameId) {
   try {
     const updatedGame = await Game.findById(gameId)
-      .populate("players", "username")
+      .populate("players")
       .populate("admin", "username")
-      .populate("scores.player", "username")
+      .populate("scores", "username")
       .populate("questions")
       .lean();
     if (updatedGame) {
       io.to(gameId).emit("gameUpdated", { game: updatedGame });
       console.log(`gameUpdated für ${gameId} gesendet.`);
     }
+
+    if(updatedGame.currentQuestionIndex + 1 >= updatedGame.questions.length) {
+      updatedGame.finished = true;
+      updatedGame.currentQuestionIndex = 0;
+      await updatedGame.save();
+    }
+
   } catch (error) {
     console.error("Fehler bei emitGameUpdate:", error);
   }
@@ -78,7 +84,7 @@ nextApp
           socket.handshake.headers["x-forwarded-for"]?.split(",")[0] || socket.handshake.address;
 
         const normalizeIp = (ip) => {
-          if (ip === "::1") return "127.0.0.1"; 
+          if (ip === "::1") return "127.0.0.1";
           if (ip.startsWith("::ffff:")) return ip.replace("::ffff:", ""); 
           return ip;
         };
@@ -87,7 +93,7 @@ nextApp
 
         console.log("Spieler beitritt", { gameId, playerId, username, clientIp });
 
-        const hashedIp = hashIp(clientIp);
+        const hashedIp = hashIp(clientIp); 
 
         try {
           const game = await Game.findById(gameId);
@@ -97,12 +103,12 @@ nextApp
             return;
           }
 
-          // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
-          if (game.blockedips && game.blockedips.includes(hashedIp)) {
-            console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
-            socket.emit("error", { message: "Du bist für dieses Spiel gesperrt." });
-            return; // Verhindert die Verbindung, wenn die IP blockiert ist
-          }
+          // // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
+          // if (game.blockedips && game.blockedips.includes(hashedIp)) {
+          //   console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
+          //   socket.emit("error", { message: "Du bist für dieses Spiel gesperrt." });
+          //   return; // Verhindert die Verbindung, wenn die IP blockiert ist
+          // }
 
           socket.join(gameId);
           socket.gameId = gameId;
@@ -160,6 +166,7 @@ nextApp
           io.to(gameId).emit("activePlayers", {
             players: activePlayersPerGame[gameId],
           });
+          await emitGameUpdate(io, gameId);
         }
       });
 
@@ -241,7 +248,7 @@ nextApp
           socket.emit("error", { message: "Antwort konnte nicht gespeichert werden." });
         }
       });
-
+// Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {
         console.log("Empfangene gameId:", gameId);
         console.log("Empfangenes showAnswer:", showAnswer);
@@ -272,15 +279,122 @@ nextApp
               index: game.currentQuestionIndex,
               total: game.questions.length,
             });
+
+
+            await emitGameUpdate(io, gameId);
+          } else {
+            console.log("Alle Fragen wurden beantwortet.");
+
+            const TemporaryUsers = await Temporary.find({ yourgame: gameId });
+
+            const scoreSnapshot = {
+              date: new Date(),
+              results: TemporaryUsers.map(user => ({
+                player: user._id,
+                points: user.points,
+                username: user.username
+              }))
+            };
+           
+            game.started = false;
+            game.currentQuestionIndex = 0;
+            game.finished = true;
+            game.scores.push(scoreSnapshot);
+
+            await Task.updateMany({ gameId: gameId }, { playeranswers: [] });
+            await Temporary.updateMany({ yourgame: gameId }, { points: 0 });
+            await game.save();
+
+            await emitGameUpdate(io, gameId);
+
           }
         } catch (error) {
           console.error("Fehler beim Laden der nächsten Frage:", error);
         }
       });
 
-      socket.on("disconnect", () => {
-        console.log("Ein Spieler hat das Spiel verlassen.");
+
+      socket.on("setPointsToUser", async ({ gameId, playerId, points }) => {
+        console.log("Punkte setzen:", { gameId, playerId, points });
+        try {
+          const game = await Game.findById(gameId);
+          const player = await Temporary.findById(playerId);
+          if (!player) {
+            socket.emit("error", { message: "Spieler nicht gefunden." });
+            return;
+          }
+          if (!game) {
+            socket.emit("error", { message: "Spiel nicht gefunden." });
+            return;
+          }
+
+          player.points += points;
+          await player.save();
+
+          await emitGameUpdate(io, gameId);
+        } catch (error) {
+          console.error("Fehler beim Setzen der Punkte:", error);
+        }
       });
+
+      socket.on("restartGame", async ({ gameId }) => {
+        console.log("Spiel wird neu gestartet:", gameId);
+        try {
+          const game = await Game.findById(gameId);
+
+          if (!game) {
+            socket.emit("error", { message: "Spiel nicht gefunden." });
+            return;
+
+          }
+
+          game.finished = false;
+          game.currentQuestionIndex = 0;
+          await game.save();
+          await emitGameUpdate(io, gameId);
+
+
+        } catch (error) {
+          console.error("Fehler beim Neustarten des Spiels:", error);
+          socket.emit("error", { message: "Spiel konnte nicht neu gestartet werden." });
+        }
+      });
+    
+
+// Spieler wird bei Disconnect entfernt, wenn er in der Datenbank ist
+      socket.on("disconnect", async () => {
+        console.log("Ein Spieler hat das Spiel verlassen.");
+      
+        const gameId = socket.gameId;
+        const playerId = socket.playerId;
+      
+        if (gameId && playerId) {
+          if (activePlayersPerGame[gameId]) {
+            activePlayersPerGame[gameId] = activePlayersPerGame[gameId].filter(
+              (player) => player.playerId !== playerId
+            );
+      
+            if (activePlayersPerGame[gameId].length === 0) {
+              delete activePlayersPerGame[gameId];
+            }
+      
+            io.to(gameId).emit("activePlayers", {
+              players: activePlayersPerGame[gameId] || [],
+            });
+          }
+      
+          const currentGame = await Game.findById(gameId);
+          if (currentGame) {
+            currentGame.players = currentGame.players.filter(
+              (player) => player.playerId.toString() !== playerId.toString()
+            );
+            currentGame.save();
+          }
+          
+          socket.leave(gameId);
+        }
+      });
+      
     });
 
     server.all("*", (req, res) => {
