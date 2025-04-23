@@ -1,20 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import { useSession } from "next-auth/react";
 import { usePlayerSocket } from "../context/playerContext";
 
-export default function QuestionView({gameId, currentQuestionIndex, questions, onNextQuestion, game, showrightAnswer, setShowRightAnswer, onClickRestart }) {
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [isAnswered, setIsAnswered] = useState(false);
+export default function QuestionView({ currentQuestionIndex, questions, game, showrightAnswer, onClickRestart, setShowBuzzeredUser, showBuzzeredUser }) {
   const [visibleAnswers, setVisibleAnswers] = useState({});
   const { data: session } = useSession();
   const { socket } = usePlayerSocket();
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  
+  useEffect(() => {
+    console.log(showBuzzeredUser)
+  }, [socket]);
+
+
 
   function toggleAnswer(playerId) {
     setVisibleAnswers((prev) => ({
@@ -23,25 +25,31 @@ export default function QuestionView({gameId, currentQuestionIndex, questions, o
     }));
   };
 
+
+
   function handleShowAnswer() {
     socket.emit("showRightAnswer", { gameId: game._id, showAnswer: true });
   }
   
   function handleShowNextQuestion() {
     socket.emit("showRightAnswer", { gameId: game._id, showAnswer: false });
-    setSelectedAnswer(null);
-    setIsAnswered(false);
     setVisibleAnswers({});
     socket.emit("nextQuestion", { gameId: game._id, questionIndex: currentQuestionIndex + 1 });
 
   }
   
+  function handleBuzzerAnswer(bool) {
+
+      socket.emit("buzzerAnswer", { gameId: game._id, username: showBuzzeredUser, answer: bool });
+
+
+  }
   
   if (!currentQuestion) {
     return <p className="text-center text-red-500">Keine Fragen vorhanden!</p>;
   }
 
-  console.log(game.admin === session?.user?.id)
+  console.log(showBuzzeredUser);
 
   return (
     <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950">
@@ -158,7 +166,42 @@ export default function QuestionView({gameId, currentQuestionIndex, questions, o
             ))}
           </>
           )}
-
+        
+            {currentQuestion.mode === "buzzer" && (
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                {showBuzzeredUser ? (
+                  <div className="mb-4">
+                    <h2 className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700">
+                      {showBuzzeredUser} hat gebuzzert!
+                    </h2>
+                    <p className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md text-base shadow-inner">
+                      War die Antwort korrekt?
+                    </p>
+                    <div className="flex gap-4 mt-2 justify-center">
+                      <button
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
+                        onClick={() => handleBuzzerAnswer(true)}
+                      >
+                        Ja
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200"
+                        onClick={() => handleBuzzerAnswer(false)}
+                      >
+                        Nein
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mb-4">
+                    <h2 className="w-full flex items-center justify-center py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700">
+                      Warte auf den nächsten Spieler...
+                    </h2>
+                  </div>
+                )}
+              </div>
+            )}
+   
         </div>
         <div className="mt-8 text-center">
             <button

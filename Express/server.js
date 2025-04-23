@@ -248,6 +248,19 @@ nextApp
           socket.emit("error", { message: "Antwort konnte nicht gespeichert werden." });
         }
       });
+
+      socket.on("buzzer", async ({ gameId, username }) => {
+        if(gameId && username) {
+          io.to(gameId).emit("buzzerPressed", {  username });
+          await emitGameUpdate(io, gameId);
+        } else {
+          console.log("Kein gameId empfangen!");
+        }
+      });
+
+
+
+
 // Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {
         console.log("Empfangene gameId:", gameId);
@@ -284,8 +297,9 @@ nextApp
             await emitGameUpdate(io, gameId);
           } else {
             console.log("Alle Fragen wurden beantwortet.");
+            socket.emit("showRightAnswer", { gameId, showAnswer: false });
 
-            const TemporaryUsers = await Temporary.find({ yourgame: gameId });
+            const TemporaryUsers = await Temporary.find({ yourgame: gameId, finalscore: false });
 
             const scoreSnapshot = {
               date: new Date(),
@@ -302,7 +316,10 @@ nextApp
             game.scores.push(scoreSnapshot);
 
             await Task.updateMany({ gameId: gameId }, { playeranswers: [] });
-            await Temporary.updateMany({ yourgame: gameId }, { points: 0 });
+            await Temporary.updateMany({ yourgame: gameId }, { 
+              points: 0,
+              finalscore: true,
+            });
             await game.save();
 
             await emitGameUpdate(io, gameId);

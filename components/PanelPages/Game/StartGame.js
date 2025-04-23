@@ -119,7 +119,9 @@ export default function StartGame() {
           </div>
           {data?.chosenGame?.invitelink ? (
           <div className="flex flex-col items-center justify-center h-full w-full">
-            <BigRedBuzzer onClick={handleRouting} />
+            <BigRedBuzzer onClick={handleRouting}>
+              STARTEN
+            </BigRedBuzzer>
           </div>
           ) : (
             <div className="flex flex-col mt-8 text-red-500">

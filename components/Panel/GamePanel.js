@@ -3,11 +3,8 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { motion } from "framer-motion";
-import Image from "next/image";
-import io from "socket.io-client";
 import { usePlayerSocket } from "../context/playerContext";
 import Loading from "../Status/Loading";
-import QuestionView from "../Mechanic/QuestionView";
 import AdminView from "../Mechanic/Adminview";
 import GuestView from "../Mechanic/Guestview";
 
@@ -16,33 +13,34 @@ export default function GamePanel() {
   const router = useRouter();
   const { isReady, query } = router;
   const { x: queryId } = query;
-  const { data: session, status } = useSession();
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showError, setShowError] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const { data: session } = useSession();
   const { players, socket } = usePlayerSocket();
   const { data: gameByID, isLoading } = useSWR(
     isReady && queryId ? `/api/gamemechanic/getGameById?x=${queryId}` : null,
   );
   const [lockedPlayers, setLockedPlayers] = useState({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [questions, setQuestions] = useState([]);
   const [game, setGame] = useState(null);
+  const [showBuzzeredUser, setShowBuzzeredUser] = useState("");
+  const [showBuzzerAnimation, setShowBuzzerAnimation] = useState(false);
   const [showrightAnswer, setShowRightAnswer] = useState(false);
 
+
+  
+  //Gelockte Spieler im Localstorage für die Anordnung der Kameras und der namen 
+  useEffect(() => {
+    if (Object.keys(lockedPlayers).length > 0) {
+      localStorage.setItem("lockedPlayers", JSON.stringify(lockedPlayers));
+    }
+  }, [lockedPlayers]);
+
+
+  //Spieler aus dem Localstorage holen die schonmal geloggt worden sind
   useEffect(() => {
     const savedLockedPlayers = localStorage.getItem("lockedPlayers");
     if (savedLockedPlayers) {
       setLockedPlayers(JSON.parse(savedLockedPlayers));
     }
   }, []);
-  
-  useEffect(() => {
-    if (Object.keys(lockedPlayers).length > 0) {
-      localStorage.setItem("lockedPlayers", JSON.stringify(lockedPlayers));
-    }
-  }, [lockedPlayers]);
 
   //showrightanswer
   useEffect(() => {
@@ -56,6 +54,24 @@ export default function GamePanel() {
     };
   }, [socket]);
   
+//Buzzer gedrückt
+  useEffect(() => {
+    socket.on("buzzerPressed", (username) => {
+      console.log("Buzzer gedrückt von:", username);
+      const audio = new Audio(`/sounds/sound${Math.floor(Math.random() * 6) + 1}.mp3`);
+      audio.play();
+
+      setShowBuzzeredUser(username);
+      setShowBuzzerAnimation(true);
+      setTimeout(() => {
+        setShowBuzzerAnimation(false);
+      }, 3000); 
+    });
+
+    return () => {
+      socket.off("buzzerPressed");
+    }
+  }, [socket]);
 
 
 //Joingame
@@ -83,12 +99,6 @@ export default function GamePanel() {
     };
   }, [socket]);
 
-  useEffect(() => {
-    if (gameByID?.questions) {
-      setQuestions(gameByID.questions);
-    }
-  }, [gameByID, game]);
-
 
   //refresh game
   useEffect(() => {
@@ -96,7 +106,6 @@ export default function GamePanel() {
     const gameId = gameByID?._id;
   
     function handleGameUpdate ({ game: updatedGame }) {
-      console.log("Updated Game:", updatedGame);
       setGame(updatedGame);
     };
   
@@ -115,7 +124,7 @@ export default function GamePanel() {
 
   if (!isReady || isLoading || !gameByID) return <Loading />;
 
-
+// Wenn ein Spieler joint erscheint ein neuer Spieler als Grabelement mit Locksymbol, hier kann man ihn an die Position ziehen und dann mit dem Lock Symbol fixieren
   function toggleLock(playerKey) {
     setLockedPlayers((prev) => {
       const prevPlayer = prev[playerKey] || { locked: false, x: 0, y: 0 };
@@ -132,23 +141,29 @@ export default function GamePanel() {
   }
 
   
-
+//startet das Spiel
   function handleStartGame() {
     if (!game) return;
     socket.emit("startGame", { gameId: game._id });
   }
 
-  function handleNextQuestion() {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-  }
-
-  console.log(game)
 
   return (
     <>
      <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
+
+      {showBuzzerAnimation && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.5 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-3 rounded-2xl text-2xl font-bold shadow-2xl z-50"
+        >
+          🚨 {showBuzzeredUser.username} hat gebuzzert!
+        </motion.div>
+      )}
+
       <>
             {session.user.isGuest && (
             
@@ -160,26 +175,23 @@ export default function GamePanel() {
               showrightAnswer={showrightAnswer}
             />
             )}
-          </>
+        </>
 
         <>
-        {!session.user.isGuest && (
-
-          <AdminView 
-            players={players} 
-            lockedPlayers={lockedPlayers}
-            setLockedPlayers={setLockedPlayers}
-            toggleLock={toggleLock}
-            gameByID={game}
-            session={session}
-            handleStartGame={handleStartGame} 
-            handleNextQuestion={handleNextQuestion}
-            showrightAnswer={showrightAnswer}
-            setShowRightAnswer={setShowRightAnswer}
-            />
-        )}
+          {!session.user.isGuest && (
+            <AdminView 
+              players={players} 
+              gameByID={game}
+              session={session}
+              setShowBuzzeredUser={setShowBuzzeredUser}
+              showBuzzeredUser={showBuzzeredUser.username}
+              handleStartGame={handleStartGame} 
+              showrightAnswer={showrightAnswer}
+              setShowRightAnswer={setShowRightAnswer}
+              />
+          )}
         
-      </>
+        </>
       </div>  
       {!session.user.isGuest && (
         <>

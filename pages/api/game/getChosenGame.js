@@ -37,6 +37,7 @@ export default async function handler(request, response) {
       .populate("players", "username")    
       .populate("admin", "username")      
       .populate("scores", "username") 
+      .populate("players", "points")
       .populate("questions")
       .lean();
     

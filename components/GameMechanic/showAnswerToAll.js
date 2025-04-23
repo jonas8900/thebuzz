@@ -14,7 +14,6 @@ export default function ShowAnswerToAll({
   isAdmin,
   question,
   game,
-  onClickRestart,
 }) {
   const confettiRef = useRef(null);
   const correctAnswerIndexInMultiple = parseInt(question.correctanswer);
@@ -251,28 +250,6 @@ export default function ShowAnswerToAll({
           )}
         </motion.div>
       )}
-      {/* // ) : (
-      //   <motion.div
-      //     className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl text-center"
-      //     initial={{ opacity: 0 }}
-      //     animate={{ opacity: 1 }}
-      //     transition={{ duration: 0.5 }}
-      //   >
-      //       <h2 className="text-3xl font-bold mb-6">Spiel beendet 🎉</h2>
-      //       <p className="text-lg text-gray-300 mb-4">Vielen Dank fürs Mitspielen!</p>
-      //       <p className="text-md text-gray-400">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
-
-      //       {isAdmin && (
-      //         <button
-      //           onClick={onClickRestart}
-      //           className="mt-4 px-6 py-3 bg-violet-600 hover:bg-violet-800 text-white rounded-lg shadow-lg transition duration-300"
-      //         >
-      //           Neues Spiel starten
-      //         </button>
-      //       )}
-      //   </motion.div>
-
-      // )} */}
     </div>
   );
 }

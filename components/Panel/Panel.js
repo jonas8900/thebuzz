@@ -13,11 +13,11 @@ import InvitePlayer from "../PanelPages/Player/InvitePlayer";
 import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
 import GameSettings from "../PanelPages/Game/GameSettings";
+import ShowPlayers from "../PanelPages/Player/ShowPlayer";
 
 
-export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
+export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
-    const { data: gameAsPlayer } = useSWR("/api/game/getGamesAsPlayer");
     
     const [activeSection, setActiveSection] = useState( {title: 'Fragen', subItem: 'Anlegen'} );
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -87,7 +87,6 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
     return (
         <AnimatePresence>
             {panelOpen & dynamicData === "admin" && (
-                  
                   <motion.div 
                     className="absolute top-1/2 left-1/2 lg:w-1/2 lg:h-3/4 w-full h-full flex border bg-gray-100 rounded-2xl shadow-xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden dark:bg-gray-900"
                     initial={{ opacity: 0, scale: 0.8, x: -300}}
@@ -159,7 +158,7 @@ export default function Panel({panelOpen, dynamicData, setDynaicData, setPanelOp
                     {activeSection.title === 'Fragen' && activeSection.subItem === 'Anlegen' && <AddQuestions/>}
                     {activeSection.title === 'Fragen' && activeSection.subItem === 'Anzeigen' && <ShowQuestions/>}
 
-                    {activeSection.title === 'Spieler' && activeSection.subItem === 'Anzeigen' && <div>Spieler anzeigen Inhalt</div>}
+                    {activeSection.title === 'Spieler' && activeSection.subItem === 'Anzeigen' && <ShowPlayers/>}
                     {activeSection.title === 'Spieler' && activeSection.subItem === 'Einladen' && <InvitePlayer/>}
 
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Starten' && <StartGame/>}

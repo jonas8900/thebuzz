@@ -12,6 +12,7 @@ export default function AdminView({
     session,
     showrightAnswer,
     setShowRightAnswer,
+    showBuzzeredUser
 }) {
     const { socket } = usePlayerSocket();
 
@@ -22,11 +23,10 @@ export default function AdminView({
         socket.emit("restartGame", { gameId: gameByID._id });
     }
 
-
     return(
             <>
                 <>
-                {!gameByID?.started && (
+                {!gameByID?.started && !gameByID.finished && (
                   <>
                 <div className="absolute left-10 top-10 w-1/4 bg-gray-800 p-4 rounded-xl">
                   <h2 className="text-xl font-semibold mb-4">Wartende Spieler</h2>
@@ -55,18 +55,21 @@ export default function AdminView({
                 </> 
                   )}
 
-                  {gameByID?.started && (
+                  {(gameByID?.started || gameByID?.finished) && (
                     <>
+
+                  
                       <QuestionView 
                         gameId={gameByID?._id} 
                         questions={gameByID?.questions} 
                         currentQuestionIndex={gameByID?.currentQuestionIndex} 
                         game={gameByID} 
                         showrightAnswer={showrightAnswer} 
-                        setShowRightAnswer={setShowRightAnswer}
                         onClickRestart={handleRestartGame}
+                        showBuzzeredUser={showBuzzeredUser}
                         
                         />
+
                     </>
                   )}
                   

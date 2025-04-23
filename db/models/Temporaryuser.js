@@ -7,6 +7,7 @@ const temporaryuserSchema = new Schema({
     username: {type: String, required: [true, "Benutzername ist erforderlich"], unique: true, trim: true},
     yourgame: {type: Schema.Types.ObjectId, required: [true, "Spiel-ID ist erforderlich"],  ref: "Game", },
     points: {type: Number, default: 0},
+    finalscore: {type: Boolean, default: false},
     createdAt: {type: Date, default: Date.now},
 });
 

@@ -3,32 +3,39 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { usePlayerSocket } from "../context/playerContext";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
+import BigRedBuzzer from "../Buttons/RedBuzzer";
 
 
 export default function GuestView({ gameByID, players, session, showrightAnswer }) {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answerInput, setAnswerInput] = useState("");
+    const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
 
-
-    gameByID?.currentQuestionIndex
 
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
 
-    console.log(gameByID.admin);
 
 
     useEffect(() => {
       console.log("Current Question:", selectedAnswer);
     }, [selectedAnswer]);
 
+    useEffect(() => {
+      currentQuestion?.playeranswers.forEach((answer) => {
+        if (answer.playerId === session?.user.id) {
+          setHasBuzzed(true);
+        } else {
+          setHasBuzzed(false);
+        }
+      });
+    }, [currentQuestion, session?.user.id]);
 
 
     function handleAnswer(event) {
         if(currentQuestion.mode === "open") {
           event.preventDefault();
-        
 
           if (!answerInput) return;
 
@@ -40,7 +47,8 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
           socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
           setAnswerInput("");
         }
-      if (currentQuestion.mode === "multiple") {
+
+      if (currentQuestion.mode === "multiple" || currentQuestion.mode === "truefalse") {
         const answer = {
             playerId: session?.user.id,
             username: session?.user.username,
@@ -49,17 +57,26 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
         setSelectedAnswer(null);
       }
-      if (currentQuestion.mode === "truefalse") {
-          const answer = {
-              playerId: session?.user.id,
-              username: session?.user.username,
-              answer: event,
-          };
-          socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
-          setSelectedAnswer(null);
-      }
+     
     }
 
+    function handleBuzzer() {
+
+      if (hasBuzzed) return;
+
+      const answer = {
+        playerId: session?.user.id,
+        username: session?.user.username,
+        answer: true,
+      };
+      socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
+      socket.emit("buzzer", { gameId: gameByID._id, username: session?.user.username });
+      setHasBuzzed(true);
+      setSelectedAnswer(null);
+    }
+
+
+console.log( localStorage.getItem('hasBuzzed') == "true")
     return (
       <>
       {!gameByID?.finished ? (
@@ -196,9 +213,13 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
                     </div>
                   )}
                   {currentQuestion.mode === "buzzer" && (
-                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                        
-                    </div>
+                  
+                      <div className="flex flex-col items-center space-y-6">
+                        <BigRedBuzzer onClick={handleBuzzer} disabled={hasBuzzed} className={`absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2  ${hasBuzzed ? "opacity-50 cursor-not-allowed bg-green-800 dark:bg-green-800" : ""}`}>
+                          BUZZERN!
+                        </BigRedBuzzer>
+                      </div>
+
                   )}
               </motion.div>
             </div>
