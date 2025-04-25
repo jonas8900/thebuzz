@@ -232,6 +232,7 @@ nextApp
             case "multiple":
             case "open":
             case "buzzer":
+
             case "truefalse":
             case "picture":
               if (question.playeranswers.some((a) => a.playerId.toString() === playerObjectId.toString())) {
@@ -251,15 +252,41 @@ nextApp
 
       socket.on("buzzer", async ({ gameId, username }) => {
         if(gameId && username) {
-          io.to(gameId).emit("buzzerPressed", {  username });
+          io.to(gameId).emit("buzzerPressed", { username });
           await emitGameUpdate(io, gameId);
         } else {
           console.log("Kein gameId empfangen!");
         }
       });
 
+      socket.on("buzzerReset", async ({ gameId }) => {
+        if(gameId) {
+          io.to(gameId).emit("buzzerResetNow");
 
+          const game = await Game.findById(gameId)
+          .populate("players", "username")
+          .populate("questions")
+          .lean();
+          if (!game) {
+            console.log("Spiel nicht gefunden");
+            return;
+          }
+          
+          const questionObject = game.questions[game.currentQuestionIndex];
+          const question = await Task.findById(questionObject._id);
 
+            if (question) {
+              if(question.playeranswers.length > 0) {
+                question.playeranswers = [];
+                await question.save();
+                }
+              }
+
+            await emitGameUpdate(io, gameId);
+          } else {
+            console.log("Kein gameId empfangen!");
+          }
+      });
 
 // Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {

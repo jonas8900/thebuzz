@@ -12,10 +12,8 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
 
-
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
-
 
 
     useEffect(() => {
@@ -23,14 +21,15 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     }, [selectedAnswer]);
 
     useEffect(() => {
-      currentQuestion?.playeranswers.forEach((answer) => {
-        if (answer.playerId === session?.user.id) {
-          setHasBuzzed(true);
-        } else {
-          setHasBuzzed(false);
-        }
-      });
-    }, [currentQuestion, session?.user.id]);
+      setHasBuzzed(false);
+      if(currentQuestion.mode === "buzzer") {
+        if(currentQuestion?.playeranswers.length > 0) {
+            setHasBuzzed(true);
+          }
+      } else {
+        setHasBuzzed(false);
+      }
+    }, [currentQuestion, session?.user?.id, socket]);
 
 
     function handleAnswer(event) {
@@ -71,12 +70,13 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
       };
       socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
       socket.emit("buzzer", { gameId: gameByID._id, username: session?.user.username });
-      setHasBuzzed(true);
-      setSelectedAnswer(null);
+      if(currentQuestion.mode === "buzzer") {
+        setHasBuzzed(true);
+        setSelectedAnswer(null);
+      }
     }
 
 
-console.log( localStorage.getItem('hasBuzzed') == "true")
     return (
       <>
       {!gameByID?.finished ? (

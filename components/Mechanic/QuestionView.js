@@ -5,17 +5,35 @@ import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import { useSession } from "next-auth/react";
 import { usePlayerSocket } from "../context/playerContext";
 
-export default function QuestionView({ currentQuestionIndex, questions, game, showrightAnswer, onClickRestart, setShowBuzzeredUser, showBuzzeredUser }) {
+export default function QuestionView({ currentQuestionIndex, questions, game, showrightAnswer, onClickRestart}) {
   const [visibleAnswers, setVisibleAnswers] = useState({});
   const { data: session } = useSession();
+  const [hasBuzzed, setHasBuzzed] = useState(false);
+  const [showBuzzeredUser, setShowBuzzeredUser] = useState("");
+  
   const { socket } = usePlayerSocket();
 
   const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
-    console.log(showBuzzeredUser)
-  }, [socket]);
+    if(currentQuestion.playeranswers.length > 0 && currentQuestion.mode === "buzzer") {
+      setHasBuzzed(true);
 
+    } else {
+      setHasBuzzed(false);
+    }
+  }, [socket, currentQuestion, currentQuestionIndex]);
+
+
+  useEffect(() => {
+    socket.on("buzzerPressed", (username) => {
+      setShowBuzzeredUser(username);
+    });
+
+    return () => {
+      socket.off("buzzerPressed");
+    }
+  }, [socket]);
 
 
   function toggleAnswer(playerId) {
@@ -40,7 +58,15 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   
   function handleBuzzerAnswer(bool) {
 
-      socket.emit("buzzerAnswer", { gameId: game._id, username: showBuzzeredUser, answer: bool });
+      if (bool === true) {
+        socket.emit("buzzerAnswer", { gameId: game._id, username: showBuzzeredUser.username, answer: bool });
+      }
+
+      if(bool === false) {
+        socket.emit("buzzerReset", { gameId: game._id});
+        setShowBuzzeredUser("");
+        setHasBuzzed(false);
+      }
 
 
   }
@@ -49,7 +75,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
     return <p className="text-center text-red-500">Keine Fragen vorhanden!</p>;
   }
 
-  console.log(showBuzzeredUser);
+  console.log(showBuzzeredUser)
 
   return (
     <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950">
@@ -169,10 +195,10 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
         
             {currentQuestion.mode === "buzzer" && (
               <div className="flex flex-col items-center justify-center h-full text-center">
-                {showBuzzeredUser ? (
+                {hasBuzzed ?  (
                   <div className="mb-4">
                     <h2 className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700">
-                      {showBuzzeredUser} hat gebuzzert!
+                      {showBuzzeredUser.username} hat gebuzzert!
                     </h2>
                     <p className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md text-base shadow-inner">
                       War die Antwort korrekt?

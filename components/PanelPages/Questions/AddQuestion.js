@@ -18,9 +18,7 @@ export default function AddQuestions() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [question, setQuestion] = useState("");
     const [mode, setMode] = useState("truefalse"); 
-
-          
-
+        
     if (!data) return null;
     if (!chosenGameObject) return null;
     const chosenGame = chosenGameObject.chosenGame;

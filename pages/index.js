@@ -37,6 +37,11 @@ export default function Home() {
     router.push("/auth/login");
   }
 
+  function handleOpenModal() {
+    setPanelOpen(true);
+    setDynamicData('admin');
+  }
+
 
 
   const fadeIn = {
@@ -59,14 +64,12 @@ export default function Home() {
           <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen} />
           <div className="flex flex-col items-center justify-center h-screen ">
             <h1 className="text-4xl font-bold mb-4">Spiel Joinen</h1>
-            <p className="text-lg mb-8">Joine einem bereits bestehendem Spiel.</p>
+            <p className="text-lg mb-8">Verwalte deine Spiele</p>
             <div className="flex space-x-4">
-                <button className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200" onClick={() => setJoingameModal(!joingameModal)}>Spiel beitreten</button>
-                <button className="px-4 py-2 bg-purple-800 text-white cursor-pointer rounded hover:bg-purple-600 active:bg-violet-500 transition duration-200">Deine Spiele</button>
+                <button className="px-4 py-2 bg-blue-500 text-white cursor-pointer rounded hover:bg-blue-600 active:bg-blue-900 transition duration-200" onClick={handleOpenModal}>Spiele Verwalten</button>
             </div>
         </div>
-          <JoinGame setJoingameModal={setJoingameModal} joingameModal={joingameModal} setYourgameModal={setYourgameModal}/>
-          <ShowYourGame setYourgameModal={setYourgameModal} yourgameModal={yourgameModal}/>
+        
           <div className="absolute bottom-1/4 transform -translate-y-1/2 left-1/2 transform -translate-x-1/2 text-center text-white">
         </div>
         </motion.div>

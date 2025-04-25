@@ -59,7 +59,13 @@ export default function GamePanel() {
     socket.on("buzzerPressed", (username) => {
       console.log("Buzzer gedrückt von:", username);
       const audio = new Audio(`/sounds/sound${Math.floor(Math.random() * 6) + 1}.mp3`);
-      audio.play();
+
+      audio.play().catch((error) => {
+        const userPrompt = window.confirm("Möchtest du die automatische Wiedergabe für diese Seite zulassen?");
+        if (userPrompt) {
+          audio.play(); 
+        }
+      });
 
       setShowBuzzeredUser(username);
       setShowBuzzerAnimation(true);
@@ -70,8 +76,18 @@ export default function GamePanel() {
 
     return () => {
       socket.off("buzzerPressed");
-    }
+    };
   }, [socket]);
+
+
+  //Buzzer zurücksetzen
+  useEffect(() => {
+    socket.on("resetBuzzer", () => {
+      console.log("Buzzer zurückgesetzt");
+      setShowBuzzeredUser("");
+      setShowBuzzerAnimation(false);
+    });
+    }, [socket]) 
 
 
 //Joingame
@@ -158,7 +174,7 @@ export default function GamePanel() {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.5 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-3 rounded-2xl text-2xl font-bold shadow-2xl z-50"
+          className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-3 rounded-2xl text-2xl font-bold shadow-2xl z-99999"
         >
           🚨 {showBuzzeredUser.username} hat gebuzzert!
         </motion.div>
@@ -183,8 +199,6 @@ export default function GamePanel() {
               players={players} 
               gameByID={game}
               session={session}
-              setShowBuzzeredUser={setShowBuzzeredUser}
-              showBuzzeredUser={showBuzzeredUser.username}
               handleStartGame={handleStartGame} 
               showrightAnswer={showrightAnswer}
               setShowRightAnswer={setShowRightAnswer}

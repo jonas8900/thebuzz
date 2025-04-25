@@ -129,7 +129,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
                                      
                                   </div>
                               </div>
-                          ))}
+                            ))}
                           <div className="absolute bottom-10 lg:w-9/10 w-1/2 left-0 p-4 pr-0 bg-gray-100 dark:bg-gray-900">
                             <h2>Aktuelles Spiel:</h2>
                             {Array.isArray(data) && data.length > 0 && (
