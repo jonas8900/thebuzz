@@ -23,7 +23,6 @@ export default async function handler(req, res) {
 
     const { questionData } = req.body;
 
-    console.log(questionData)
 
   try {
 

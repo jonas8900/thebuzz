@@ -21,15 +21,12 @@ export default async function handler(req, res) {
   const userId = session.user.id;
   const { selectedGameId } = req.body;
 
-  console.log("UserID:", userId, "GameID:", selectedGameId);
 
   try {
     if (!mongoose.Types.ObjectId.isValid(selectedGameId)) {
-      console.log("Ungültige GameID:", selectedGameId);
       throw new Error("Ungültige GameID");
     }
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log("Ungültige UserID:", userId);
       throw new Error("Ungültige UserID");
     }
 
@@ -42,8 +39,6 @@ export default async function handler(req, res) {
       { $set: { chosengame: newGameId } },
       { new: true, runValidators: true }
     ).lean();
-
-    console.log("Updated User Document:", updatedUser);
 
     if (!updatedUser) {
       console.log("Kein User gefunden mit ID:", userId);

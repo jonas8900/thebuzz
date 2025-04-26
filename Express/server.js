@@ -314,16 +314,11 @@ nextApp
               const currentQuestion = await Task.findById(currentId);
 
 
-              console.log("Aktuelle Frage:", currentQuestion);
-              console.log(game.questions)
-              console.log(currentQuestionInGame)
-
               if (currentQuestion.playeranswers.length > 0 && currentQuestion.mode !== "buzzer" && currentQuestion.mode !== "open" && currentQuestion.mode !== "picture" && currentQuestion.pointsgiven === false) {
                 for (const answer of currentQuestion.playeranswers) {
                   const playerObjectId = new mongoose.Types.ObjectId(answer.playerId);
                   const tempplayer = await Temporary.findById(playerObjectId);
-                  console.log("Aktueller Spieler:", tempplayer);
-                  console.log("Answer:", answer);
+
                   if (tempplayer) {
 
                     if(answer.answer === currentQuestion.correctanswer && currentQuestion.mode !== "multiple") {
@@ -407,8 +402,6 @@ nextApp
            
             if (scoreSnapshot.results.length > 0) {
               game.scores.push(scoreSnapshot);
-              console.log("Aktueller Spielstand:", game.scores);
-              console.log("Zu pushen:", scoreSnapshot);
             } else {
               console.log("Keine Spieler gefunden für dieses Spiel, daher wird kein Snapshot hinzugefügt.");
             }

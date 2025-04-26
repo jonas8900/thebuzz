@@ -11,7 +11,7 @@ export default function ShowPlayers() {
 
     if(isLoading) return <Loading/>;
 
-    console.log(game);
+
     return(
    
               <>

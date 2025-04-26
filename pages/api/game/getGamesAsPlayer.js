@@ -16,14 +16,12 @@ export default async function handler(request, response) {
       if (request.method === "GET") {
         try {
           const userId = session.user.id;
-          console.log(userId);
     
           
           const games = await Game.find({ players: userId })
                 .select("_id name")
                 .lean();
 
-          console.log(games);
     
           if (games.length === 0) {
             return response.status(404).json({ message: "Keine Spiele gefunden" });

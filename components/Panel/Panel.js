@@ -36,7 +36,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
 
     useEffect(() => {
         if(createGameOpen) {
-            console.log(createGameOpen)
+
             setPanelOpen(true);
             setActiveSection({ title: 'Spiel', subItem: 'Erstellen' });
             setCreateGameOpen(false);
@@ -70,7 +70,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
         });
       
         const data = await response.json();
-        console.log(data);
+
       
         if (!response.ok) {
           setShowError(true);

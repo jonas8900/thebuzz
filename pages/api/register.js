@@ -7,7 +7,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  console.log(req.body);
 
   const { email, password, name, username } = req.body;
 

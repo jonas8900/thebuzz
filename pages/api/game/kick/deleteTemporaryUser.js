@@ -12,7 +12,6 @@ export default async function handler(req, res) {
   const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
   const { playerId, gameId } = req.body;
 
-  console.log(playerId, gameId);
 
   if (!gameId || !playerId) {
     return res.status(400).json({ message: "Missing gameId or playerId" });

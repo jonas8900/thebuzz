@@ -54,8 +54,7 @@ export default function GameStatistic() {
   }
 
   if (error) return <div>Error loading game data.</div>;
-  console.log(game);
-  console.log(game)
+
 
   return (
     <div className="relative bg-gray-900 text-white py-12 px-6">

@@ -80,11 +80,9 @@ export const authOptions = {
       
           let tempUser = await Temporaryuser.findOne({ username });
           if (!tempUser) {
-            console.log("Erstelle neuen temporären Benutzer...");
             tempUser = await Temporaryuser.create({ username, yourgame: gameId });
           }
       
-          console.log("Temporärer Benutzer:", tempUser);
       
           return {
             id: tempUser._id.toString(),

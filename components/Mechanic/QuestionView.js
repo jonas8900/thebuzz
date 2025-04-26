@@ -4,6 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import { useSession } from "next-auth/react";
 import { usePlayerSocket } from "../context/playerContext";
+import { FaCrown } from "react-icons/fa";
 
 export default function QuestionView({ currentQuestionIndex, questions, game, showrightAnswer, onClickRestart}) {
   const [visibleAnswers, setVisibleAnswers] = useState({});
@@ -13,6 +14,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   const { socket } = usePlayerSocket();
   const [pointsGiven , setPointsGiven ] = useState(false);
   const [compareIndex, setCompareIndex] = useState(0);
+  const [selectedScoreIndex, setSelectedScoreIndex] = useState(0);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -36,6 +38,11 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
     }
   }, [socket]);
 
+  useEffect(() => {
+    if (game?.scores?.length > 0) {
+      setSelectedScoreIndex(game.scores.length - 1); 
+    }
+  }, [game?.scores]);
 
 
   function toggleAnswer(playerId) {
@@ -60,6 +67,10 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
 
 
   }
+
+  function handleScoreChange(event) {
+    setSelectedScoreIndex(Number(event.target.value));
+}
 
 
   function handleBuzzerAnswer(bool, playerId) {
@@ -106,6 +117,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   if (!currentQuestion) {
     return <p className="text-center text-red-500">Keine Fragen vorhanden!</p>;
   }
+
 
 
   return (
@@ -278,28 +290,126 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
        
       </motion.div>
       ) : (
+         <>
         <motion.div
-          className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl text-center"
+          className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-12 rounded-3xl border border-gray-700 shadow-2xl text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
-            <h2 className="text-3xl font-bold mb-6">Spiel beendet 🎉</h2>
-            <p className="text-lg text-gray-300 mb-4">Vielen Dank fürs Mitspielen!</p>
-            <p className="text-md text-gray-400">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
+          <h2 className="text-3xl font-bold mb-6">Spiel beendet 🎉</h2>
+          <p className="text-lg text-gray-300 mb-6">Vielen Dank fürs Mitspielen!</p>
+          <p className="text-md text-gray-400 mb-8">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
+
+          {(game.admin === session?.user?.id || game.admin._id === session?.user?.id) && (
+            <button
+              onClick={onClickRestart}
+              className="px-6 py-3 bg-violet-600 hover:bg-violet-800 text-white rounded-lg shadow-lg transition duration-300 mt-6"
+            >
+              Neues Spiel starten
+            </button>
+          )}
+        
             
 
-            {(game.admin === session?.user?.id || game.admin._id === session?.user?.id)  && (
-              <button
-                onClick={onClickRestart}
-                className="mt-4 px-6 py-3 bg-violet-600 hover:bg-violet-800 text-white rounded-lg shadow-lg transition duration-300"
-              >
-                Neues Spiel starten
-              </button>
-            )}
-        </motion.div>
 
-      )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="text-center mt-14 px-4"
+        >
+          <p className="text-lg mb-8">Hier sind die Spielergebnisse und Punktestände</p>
+
+          <div className="text-center mb-6">
+            <select
+              value={selectedScoreIndex}
+              onChange={handleScoreChange}
+              className="bg-gray-700 text-white p-2 rounded-lg mb-6"
+            >
+              {game && game.scores?.map((score, index) => (
+                <option key={index} value={index}>
+                  Score {index + 1} - {new Date(score.date).toLocaleString('de-DE', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: false
+                  })}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {game && game?.scores?.length > 0 ? (
+  game?.scores[selectedScoreIndex]?.results?.length > 0 ? (
+    game?.scores[selectedScoreIndex]?.results
+      .sort((a, b) => b.points - a.points)
+      .map((score, index) => {
+        const player = game?.players.find(p => {
+          return score.player._id === p?.playerId?._id.toString() ;
+        });
+        const isFirstPlace = index === 0;
+
+        if (!player) {
+          return (
+            <motion.div key={score.player._id} className="bg-gray-800 p-6 rounded-lg shadow-lg">
+              <div className="text-center">
+                <p>Player not found</p>
+              </div>
+            </motion.div>
+          );
+        }
+
+        return (
+          <motion.div
+            key={score.player}
+            className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`}
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+          >
+            <div className="text-center relative">
+              {isFirstPlace && (
+                <motion.div
+                  initial={{ y: 10 }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute top-[-20px] left-1/2 transform -translate-x-1/2"
+                >
+                  <FaCrown className="text-yellow-400 text-3xl" />
+                </motion.div>
+              )}
+              <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>
+                {player.username}
+              </h2>
+              <p className="text-lg">Punkte: {score.points}</p>
+            </div>
+          </motion.div>
+        );
+      })
+  ) : (
+    <p>No scores available</p>
+  )
+) : (
+  <p>Loading...</p>
+)}
+
+          </div>
+          
+          </motion.div>
+        </motion.div>
+        </>
+          )}
+
+
+
       {showrightAnswer && (
         <ShowAnswerToAll 
           answer={currentQuestion.answer}
@@ -311,6 +421,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
         />
       )}
       </AnimatePresence>
+
     </div>
 
     

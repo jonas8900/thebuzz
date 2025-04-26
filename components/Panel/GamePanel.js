@@ -163,8 +163,7 @@ export default function GamePanel() {
     socket.emit("startGame", { gameId: game._id });
   }
 
-  console.log(game)
-  console.log(game?.players)
+
 
   return (
     <>

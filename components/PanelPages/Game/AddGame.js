@@ -134,7 +134,7 @@ export default function AddGame() {
           }
     }
 
-    console.log("ChosenGame", chosenGame, "Data", data);
+
 
     return(
         <>
