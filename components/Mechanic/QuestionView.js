@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import { useSession } from "next-auth/react";
@@ -10,8 +10,9 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   const { data: session } = useSession();
   const [hasBuzzed, setHasBuzzed] = useState(false);
   const [showBuzzeredUser, setShowBuzzeredUser] = useState("");
-  
   const { socket } = usePlayerSocket();
+  const [pointsGiven , setPointsGiven ] = useState(false);
+  const [compareIndex, setCompareIndex] = useState(0);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -36,6 +37,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   }, [socket]);
 
 
+
   function toggleAnswer(playerId) {
     setVisibleAnswers((prev) => ({
       ...prev,
@@ -50,41 +52,74 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   }
   
   function handleShowNextQuestion() {
-    socket.emit("showRightAnswer", { gameId: game._id, showAnswer: false });
-    setVisibleAnswers({});
+ 
     socket.emit("nextQuestion", { gameId: game._id, questionIndex: currentQuestionIndex + 1 });
+    setVisibleAnswers({});
+
+    socket.emit("showRightAnswer", { gameId: game._id, showAnswer: false });
+
 
   }
-  
-  function handleBuzzerAnswer(bool) {
 
+
+  function handleBuzzerAnswer(bool, playerId) {
+
+//statemanagement "pointsGiven" verhindert mehrmaliges draufklicken und versuchen die punkte zu bekommen
       if (bool === true) {
-        socket.emit("buzzerAnswer", { gameId: game._id, username: showBuzzeredUser.username, answer: bool });
+        if(pointsGiven) {
+          console.log("Punkte wurden bereits vergeben");
+          return;
+        }
+        socket.emit("setPointsToUser", {
+          gameId: game._id,
+          playerId,
+          points: currentQuestion.points,
+        });
+        setPointsGiven(true);
+        setTimeout(() => {
+          setPointsGiven(false);
+        }, 2000);
+        socket.emit("showRightAnswer", { gameId: game._id, showAnswer: true });
       }
 
       if(bool === false) {
+        if(pointsGiven) {
+          console.log("Punkte wurden bereits abgezogen");
+          return; 
+        }
+        socket.emit("removePoints", { 
+          gameId: game._id, 
+          playerId, 
+          points: currentQuestion.points 
+        });
         socket.emit("buzzerReset", { gameId: game._id});
+        setPointsGiven(true);
+        setTimeout(() => {
+          setPointsGiven(false);
+        }, 2000);
         setShowBuzzeredUser("");
         setHasBuzzed(false);
       }
-
-
   }
+
   
   if (!currentQuestion) {
     return <p className="text-center text-red-500">Keine Fragen vorhanden!</p>;
   }
 
-  console.log(showBuzzeredUser)
 
   return (
+
     <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950">
+      <AnimatePresence mode="wait">
       {!game?.finished ? (
       <motion.div
         className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl"
+        key={currentQuestionIndex} 
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0}}
+        transition={{ duration: 1, delay: 0.5 }}
       >
         <h2 className="text-2xl md:text-3xl font-bold mb-10 text-center">
          <span className="text-base flex items-center mb-6 ">Frage {currentQuestionIndex + 1} <span className="text-violet-400"> / Modus {currentQuestion.mode}</span></span> 
@@ -206,13 +241,13 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
                     <div className="flex gap-4 mt-2 justify-center">
                       <button
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200"
-                        onClick={() => handleBuzzerAnswer(true)}
+                        onClick={() => handleBuzzerAnswer(true, currentQuestion.playeranswers[0].playerId)}
                       >
                         Ja
                       </button>
                       <button
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-200"
-                        onClick={() => handleBuzzerAnswer(false)}
+                        onClick={() => handleBuzzerAnswer(false, currentQuestion.playeranswers[0].playerId)}
                       >
                         Nein
                       </button>
@@ -252,8 +287,9 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
             <h2 className="text-3xl font-bold mb-6">Spiel beendet 🎉</h2>
             <p className="text-lg text-gray-300 mb-4">Vielen Dank fürs Mitspielen!</p>
             <p className="text-md text-gray-400">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
+            
 
-            {game?.admin === session?.user?.id && (
+            {(game.admin === session?.user?.id || game.admin._id === session?.user?.id)  && (
               <button
                 onClick={onClickRestart}
                 className="mt-4 px-6 py-3 bg-violet-600 hover:bg-violet-800 text-white rounded-lg shadow-lg transition duration-300"
@@ -274,7 +310,10 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
           game={game}
         />
       )}
+      </AnimatePresence>
     </div>
+
+    
     
 
   );

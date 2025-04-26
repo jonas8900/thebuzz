@@ -1,5 +1,5 @@
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { usePlayerSocket } from "../context/playerContext";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
@@ -12,13 +12,10 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
 
+  
+
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
-
-
-    useEffect(() => {
-      console.log("Current Question:", selectedAnswer);
-    }, [selectedAnswer]);
 
     useEffect(() => {
       setHasBuzzed(false);
@@ -30,7 +27,6 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         setHasBuzzed(false);
       }
     }, [currentQuestion, session?.user?.id, socket]);
-
 
     function handleAnswer(event) {
         if(currentQuestion.mode === "open") {
@@ -83,145 +79,147 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
       <>
         {gameByID?.started ? (
           <>
-            <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950">
+            <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950'>
+              <AnimatePresence mode="wait">
+                
               <motion.div
                 className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl"
-                style={{ boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)" }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                key={currentQuestion}
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1  }} 
+                exit={{ opacity: 0 }} 
+                transition={{ duration: 1 }}  
               >
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-sm md:text-base tracking-wide text-gray-300">
-                    Frage {currentQuestionIndex + 1}
-                    <span className="ml-2 text-violet-400 font-semibold">
-                      / Modus {currentQuestion.mode}
-                    </span>
-                  </h2>
-                  <h3 className="text-sm md:text-base text-gray-400">
-                    Spieler: {session?.user.username}
+
+                  <div className="flex justify-between items-center mb-8">
+                    <h2 className="text-sm md:text-base tracking-wide text-gray-300">
+                      Frage {currentQuestionIndex + 1}
+                      <span className="ml-2 text-violet-400 font-semibold">
+                        / Modus {currentQuestion.mode}
+                      </span>
+                    </h2>
+                  </div>
+
+                  <h3 className="text-3xl md:text-4xl font-bold mb-10 text-center leading-snug drop-shadow">
+                    {currentQuestion.question}
                   </h3>
-                </div>
 
-                <h3 className="text-3xl md:text-4xl font-bold mb-10 text-center leading-snug drop-shadow">
-                  {currentQuestion.question}
-                </h3>
-
-                {currentQuestion.mode === "open" && (
-                  <div className="flex flex-col items-center space-y-6">
-                    {currentQuestion.playeranswers.find(
-                      (answer) => answer.playerId === session?.user.id
-                    ) ? (
-                      <h4 className="text-xl text-center font-semibold text-green-400">
-                        Deine Antwort:{" "}
-                        {
-                          currentQuestion.playeranswers.find(
-                            (answer) => answer.playerId === session?.user.id
-                          ).answer
-                        }
-                      </h4>
-                    ) : (
-                      <form
-                        onSubmit={handleAnswer}
-                        className="flex flex-col w-full max-w-md space-y-5"
-                      >
-                        <div className="relative w-full">
-                          <input
-                            type="text"
-                            id="answer"
-                            name="answer"
-                            required
-                            placeholder=" "
-                            value={answerInput}
-                            onChange={(e) => setAnswerInput(e.target.value)}
-                            className="peer w-full px-4 pt-5 pb-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                          />
-                          <label
-                            htmlFor="answer"
-                            className={`absolute left-4 text-sm text-gray-500 dark:text-gray-400 transition-all pointer-events-none
-                              ${answerInput ? 'top-2 text-xs' : 'top-1/2 transform -translate-y-1/2'} 
-                              peer-placeholder-shown:top-1/2 
-                              peer-placeholder-shown:-translate-y-1/2 
-                              peer-focus:top-2 
-                              peer-focus:text-xs 
-                              peer-focus:text-blue-500`}
-                          >
-                            Deine Antwort
-                          </label>
-                        </div>
-                        <button
-                          type="submit"
-                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition w-full shadow-md"
-                        >
-                          Antwort abschicken
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                )}
-                {currentQuestion.mode === "multiple" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {currentQuestion.answers.map((answer, index) => {
-                      const foundAnswer = currentQuestion.playeranswers.find(
+                  {currentQuestion.mode === "open" && (
+                    <div className="flex flex-col items-center space-y-6">
+                      {currentQuestion.playeranswers.find(
                         (answer) => answer.playerId === session?.user.id
-                      );
-                      const playerGivenAnswer = foundAnswer?.answer;
-                      
-                      return(
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setSelectedAnswer(answer);
-                          handleAnswer(answer);
-                        }}
-                        disabled={foundAnswer}
-                        className={`w-full cursor-pointer max-w-md bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition ${
-                          selectedAnswer === answer ? "bg-blue-600" : ""
-                        }
-                        ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
-                          ${playerGivenAnswer === answer ? "bg-green-600 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-700"}
-                        `}
-                      >
-                        {answer}
-                      </button>
-                      );})}
-                  </div>
-                )}
-                {currentQuestion.mode === "truefalse" && (
-                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                      {["Wahr", "Falsch"].map((label, index) => {
-                        const boolValue = label === "Wahr";
+                      ) ? (
+                        <h4 className="text-xl text-center font-semibold text-green-400">
+                          Deine Antwort:{" "}
+                          {
+                            currentQuestion.playeranswers.find(
+                              (answer) => answer.playerId === session?.user.id
+                            ).answer
+                          }
+                        </h4>
+                      ) : (
+                        <form
+                          onSubmit={handleAnswer}
+                          className="flex flex-col w-full max-w-md space-y-5"
+                        >
+                          <div className="relative w-full">
+                            <input
+                              type="text"
+                              id="answer"
+                              name="answer"
+                              required
+                              placeholder=" "
+                              value={answerInput}
+                              onChange={(e) => setAnswerInput(e.target.value)}
+                              className="peer w-full px-4 pt-5 pb-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            />
+                            <label
+                              htmlFor="answer"
+                              className={`absolute left-4 text-sm text-gray-500 dark:text-gray-400 transition-all pointer-events-none
+                                ${answerInput ? 'top-2 text-xs' : 'top-1/2 transform -translate-y-1/2'} 
+                                peer-placeholder-shown:top-1/2 
+                                peer-placeholder-shown:-translate-y-1/2 
+                                peer-focus:top-2 
+                                peer-focus:text-xs 
+                                peer-focus:text-blue-500`}
+                            >
+                              Deine Antwort
+                            </label>
+                          </div>
+                          <button
+                            type="submit"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition w-full shadow-md"
+                          >
+                            Antwort abschicken
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )}
+                  {currentQuestion.mode === "multiple" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {currentQuestion.answers.map((answer, index) => {
                         const foundAnswer = currentQuestion.playeranswers.find(
                           (answer) => answer.playerId === session?.user.id
                         );
                         const playerGivenAnswer = foundAnswer?.answer;
-
-                        return (
-                          <button
-                            key={index}
-                            onClick={() => handleAnswer(boolValue)}
-                            disabled={!!foundAnswer}
-                            className={`w-full cursor-pointer bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 
-                              ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
-                              ${playerGivenAnswer === boolValue ? "bg-green-600 hover:bg-green-600" : "hover:bg-gray-700"}
-                            `}
-                          >
-                            {label}
-                          </button>
-                        );
-                      })}
+                        
+                        return(
+                        <button
+                          key={index}
+                          onClick={() => {
+                            setSelectedAnswer(answer);
+                            handleAnswer(answer);
+                          }}
+                          disabled={foundAnswer}
+                          className={`w-full cursor-pointer max-w-md bg-gray-500 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition ${
+                            selectedAnswer === answer ? "bg-blue-600" : ""
+                          }
+                          ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
+                            ${playerGivenAnswer === answer ? "bg-green-600 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-700"}
+                          `}
+                        >
+                          {answer}
+                        </button>
+                        );})}
                     </div>
                   )}
-                  {currentQuestion.mode === "buzzer" && (
-                  
-                      <div className="flex flex-col items-center space-y-6">
-                        <BigRedBuzzer onClick={handleBuzzer} disabled={hasBuzzed} className={`absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2  ${hasBuzzed ? "opacity-50 cursor-not-allowed bg-green-800 dark:bg-green-800" : ""}`}>
-                          BUZZERN!
-                        </BigRedBuzzer>
-                      </div>
+                  {currentQuestion.mode === "truefalse" && (
+                      <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                        {["Wahr", "Falsch"].map((label, index) => {
+                          const boolValue = label === "Wahr";
+                          const foundAnswer = currentQuestion.playeranswers.find(
+                            (answer) => answer.playerId === session?.user.id
+                          );
+                          const playerGivenAnswer = foundAnswer?.answer;
 
-                  )}
-              </motion.div>
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleAnswer(boolValue)}
+                              disabled={!!foundAnswer}
+                              className={`w-full cursor-pointer bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 
+                                ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
+                                ${playerGivenAnswer === boolValue ? "bg-green-600 hover:bg-green-600" : "hover:bg-gray-700"}
+                              `}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {currentQuestion.mode === "buzzer" && (
+                    
+                        <div className="flex flex-col items-center space-y-6">
+                          <BigRedBuzzer onClick={handleBuzzer} disabled={hasBuzzed} className={`absolute top-2/3 left-1/2 -translate-x-1/2 -translate-y-1/2  ${hasBuzzed ? "opacity-50 cursor-not-allowed bg-green-800 dark:bg-green-800" : ""}`}>
+                            BUZZERN!
+                          </BigRedBuzzer>
+                        </div>
+
+                    )}
+                </motion.div>
+                </AnimatePresence>
             </div>
 
 
@@ -276,7 +274,9 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
               <p className="text-sm text-gray-400 mt-4">
                 Der Admin bereitet das Spiel vor...
               </p>
+              
             </div>
+            
           </>
         )}
 
@@ -306,7 +306,7 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         </motion.div>
       </>
     )}
-  </>
+      </>
     );
   }
   

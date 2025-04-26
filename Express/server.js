@@ -25,9 +25,10 @@ async function emitGameUpdate(io, gameId) {
       console.log(`gameUpdated für ${gameId} gesendet.`);
     }
 
-    if(updatedGame.currentQuestionIndex + 1 >= updatedGame.questions.length) {
+    if(updatedGame?.currentQuestionIndex + 1 >= updatedGame?.questions?.length) {
       updatedGame.finished = true;
       updatedGame.currentQuestionIndex = 0;
+      console.log(updatedGame, 'UpdatedGame');
       await updatedGame.save();
     }
 
@@ -161,7 +162,6 @@ nextApp
         console.log("Watcher tritt bei:", gameId);
         socket.join(gameId);
 
-        console.log(activePlayersPerGame[gameId])
         if (activePlayersPerGame[gameId]) {
           io.to(gameId).emit("activePlayers", {
             players: activePlayersPerGame[gameId],
@@ -232,7 +232,6 @@ nextApp
             case "multiple":
             case "open":
             case "buzzer":
-
             case "truefalse":
             case "picture":
               if (question.playeranswers.some((a) => a.playerId.toString() === playerObjectId.toString())) {
@@ -290,8 +289,6 @@ nextApp
 
 // Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {
-        console.log("Empfangene gameId:", gameId);
-        console.log("Empfangenes showAnswer:", showAnswer);
 
         if (gameId) {
           io.to(gameId).emit("showRightAnswerNow", showAnswer);
@@ -323,8 +320,10 @@ nextApp
 
             await emitGameUpdate(io, gameId);
           } else {
-            console.log("Alle Fragen wurden beantwortet.");
-            socket.emit("showRightAnswer", { gameId, showAnswer: false });
+            game.finished = true;
+            await game.save(); 
+            await emitGameUpdate(io, gameId);
+            
 
             const TemporaryUsers = await Temporary.find({ yourgame: gameId, finalscore: false });
 
@@ -339,7 +338,6 @@ nextApp
            
             game.started = false;
             game.currentQuestionIndex = 0;
-            game.finished = true;
             game.scores.push(scoreSnapshot);
 
             await Task.updateMany({ gameId: gameId }, { playeranswers: [] });
@@ -348,6 +346,7 @@ nextApp
               finalscore: true,
             });
             await game.save();
+            socket.emit("showRightAnswer", { gameId, showAnswer: false });
 
             await emitGameUpdate(io, gameId);
 
@@ -357,6 +356,27 @@ nextApp
         }
       });
 
+      socket.on("removePoints", async ({ gameId, playerId, points }) => {
+        try {
+          const game = await Game.findById(gameId);
+          const player = await Temporary.findById(playerId);
+          if (!player) {
+            socket.emit("error", { message: "Spieler nicht gefunden." });
+            return;
+          }
+          if (!game) {
+            socket.emit("error", { message: "Spiel nicht gefunden." });
+            return;
+          }
+
+          player.points -= points;
+          await player.save();
+
+          await emitGameUpdate(io, gameId);
+        } catch (error) {
+          console.error("Fehler beim Entfernen der Punkte:", error);
+        }
+      });
 
       socket.on("setPointsToUser", async ({ gameId, playerId, points }) => {
         console.log("Punkte setzen:", { gameId, playerId, points });

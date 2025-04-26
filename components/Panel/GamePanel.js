@@ -80,14 +80,14 @@ export default function GamePanel() {
   }, [socket]);
 
 
-  //Buzzer zurücksetzen
-  useEffect(() => {
-    socket.on("resetBuzzer", () => {
-      console.log("Buzzer zurückgesetzt");
-      setShowBuzzeredUser("");
-      setShowBuzzerAnimation(false);
-    });
-    }, [socket]) 
+  // //Buzzer zurücksetzen
+  // useEffect(() => {
+  //   socket.on("resetBuzzer", () => {
+  //     console.log("Buzzer zurückgesetzt");
+  //     setShowBuzzeredUser("");
+  //     setShowBuzzerAnimation(false);
+  //   });
+  //   }, [socket]) 
 
 
 //Joingame

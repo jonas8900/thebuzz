@@ -70,16 +70,12 @@ export default function ShowAnswerToAll({
   }, [showError]);
 
   function handleSetPointsToUser(playerId) {
-    console.log("Punkte vergeben an Spieler:", playerId);
-    console.log("Punkte vergeben an Spieler:", question.points);
-
     setPointsGivenTo((prev) => [...prev, playerId]);
     if (pointsGivenTo.includes(playerId)) {
       setShowError(true);
       setToastMessage("Spieler hat bereits Punkte erhalten!");
       return;
     }
-    console.log("hier komm ich nicht mehr hin");
     socket.emit("setPointsToUser", {
       gameId: game._id,
       playerId,
@@ -177,6 +173,24 @@ export default function ShowAnswerToAll({
 
                 <p className="text-md text-gray-600 dark:text-gray-300 mt-4">
                   Welcher Spieler war am nächsten dran?
+                </p>
+              </div>
+            </>
+          )}
+
+          {question.mode === "buzzer" && (
+            <>
+              <div className="text-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+                  Korrekte Antwort: <br></br>
+                  <span className="text-blue-600 dark:text-blue-400 ml-2">
+                    {correctanswer}
+                  </span>
+                </h2>
+
+                <p className="text-md text-gray-600 dark:text-gray-300 mt-4">
+                  {question?.playeranswers[0]?.username} war am schnellsten und hat die
+                  richtige Antwort gegeben!
                 </p>
               </div>
             </>

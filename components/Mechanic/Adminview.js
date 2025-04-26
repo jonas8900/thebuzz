@@ -66,7 +66,6 @@ export default function AdminView({
                         game={gameByID} 
                         showrightAnswer={showrightAnswer} 
                         onClickRestart={handleRestartGame}
-                        showBuzzeredUser={showBuzzeredUser}
                         
                         />
 
