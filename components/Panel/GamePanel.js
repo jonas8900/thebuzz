@@ -163,6 +163,8 @@ export default function GamePanel() {
     socket.emit("startGame", { gameId: game._id });
   }
 
+  console.log(game)
+  console.log(game?.players)
 
   return (
     <>
@@ -209,7 +211,7 @@ export default function GamePanel() {
       </div>  
       {!session.user.isGuest && (
         <>
-      {players.map((player) => {
+      {game?.players.map((player) => {
               const playerKey = player.username;
               return(
       <motion.div
@@ -243,7 +245,7 @@ export default function GamePanel() {
           lockedPlayers[playerKey]?.locked ? "bg-violet-700" : "bg-gray-600"
         } p-2 rounded-md cursor-move mb-2`}
       >
-        {player.username} {player.points}
+        {player.username} {player?.playerId?.points !== undefined ? `/ P: ${player.playerId.points}` : ''}
         <button
           onClick={() => toggleLock(playerKey)}
           className="ml-2 px-2 py-1 bg-white text-black rounded"

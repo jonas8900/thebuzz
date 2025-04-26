@@ -21,6 +21,7 @@ export default function Home() {
   const [joingameModal, setJoingameModal] = useState(false);
   const [yourgameModal, setYourgameModal] = useState(false);
   const [createGameOpen, setCreateGameOpen] = useState(false);
+  const [statisticsOpen, setStatisticsOpen] = useState(false);
   const router = useRouter();
 
 
@@ -58,10 +59,10 @@ export default function Home() {
         variants={fadeIn}
       >
         <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-          <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen}/>
+          <Navigation session={session} setPanelOpen={setPanelOpen} panelOpen={panelOpen} setDynamicData={setDynamicData} dynamicData={dynamicData} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen} statisticsOpen={statisticsOpen} setStatisticsOpen={setStatisticsOpen}/>
         </motion.div>
         <motion.div initial="hidden" animate="visible" variants={fadeIn} transition={{ delay: 0.5 }}>
-          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen} />
+          <Panel panelOpen={panelOpen} session={session} setDynamicData={setDynamicData} dynamicData={dynamicData} setPanelOpen={setPanelOpen} setCreateGameOpen={setCreateGameOpen} createGameOpen={createGameOpen} statisticsOpen={statisticsOpen} setStatisticsOpen={setStatisticsOpen}/>
           <div className="flex flex-col items-center justify-center h-screen ">
             <h1 className="text-4xl font-bold mb-4">Spiel Joinen</h1>
             <p className="text-lg mb-8">Verwalte deine Spiele</p>

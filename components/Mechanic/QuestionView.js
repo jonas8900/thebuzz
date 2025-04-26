@@ -17,7 +17,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
   const currentQuestion = questions[currentQuestionIndex];
 
   useEffect(() => {
-    if(currentQuestion.playeranswers.length > 0 && currentQuestion.mode === "buzzer") {
+    if(currentQuestion?.playeranswers?.length > 0 && currentQuestion?.mode === "buzzer") {
       setHasBuzzed(true);
 
     } else {

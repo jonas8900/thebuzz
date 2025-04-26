@@ -65,6 +65,7 @@ export default function AddQuestions() {
                 mode: mode,
                 gameId: chosenGame._id,
                 points: backendData.Points,
+                pointsgiven: false,
             };
         }
 
@@ -76,6 +77,7 @@ export default function AddQuestions() {
                 gameId: chosenGame._id,
                 points: backendData.Points,
                 answers: answers,
+                pointsgiven: false,
             }
         }
 
@@ -86,6 +88,7 @@ export default function AddQuestions() {
                 mode: mode,
                 gameId: chosenGame._id,
                 points: backendData.Points,
+                pointsgiven: false,
             };
         }
 
@@ -96,6 +99,7 @@ export default function AddQuestions() {
                 mode: mode,
                 gameId: chosenGame._id,
                 points: backendData.Points,
+                pointsgiven: false,
             };
         }
 
@@ -107,6 +111,8 @@ export default function AddQuestions() {
                 gameId: chosenGame._id,
                 points: backendData.Points,
                 file: backendData.imageUpload,
+                pointsgiven: false,
+
             }   
         }
         

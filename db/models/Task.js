@@ -16,6 +16,7 @@ const taskSchema = new Schema({
   mode: { type: String, required: true },
   gameId: { type: String, required: true },
   points: { type: Number, required: true },
+  pointsgiven: { type: Boolean, required: true },
   file: { type: String },
 });
 

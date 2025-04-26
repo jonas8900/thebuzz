@@ -15,22 +15,24 @@ function hashIp(ip) {
 async function emitGameUpdate(io, gameId) {
   try {
     const updatedGame = await Game.findById(gameId)
-      .populate("players")
-      .populate("admin", "username")
-      .populate("scores", "username")
-      .populate("questions")
-      .lean();
+            .populate({
+              path: "players.playerId", 
+              select: "username points"  
+            })
+            .populate("admin", "username")
+            .populate("scores.results.player")
+            .populate("questions")
+            .lean();
     if (updatedGame) {
       io.to(gameId).emit("gameUpdated", { game: updatedGame });
-      console.log(`gameUpdated für ${gameId} gesendet.`);
     }
 
     if(updatedGame?.currentQuestionIndex + 1 >= updatedGame?.questions?.length) {
       updatedGame.finished = true;
       updatedGame.currentQuestionIndex = 0;
-      console.log(updatedGame, 'UpdatedGame');
       await updatedGame.save();
     }
+
 
   } catch (error) {
     console.error("Fehler bei emitGameUpdate:", error);
@@ -121,6 +123,8 @@ nextApp
           }
 
           const playerObjectId = new mongoose.Types.ObjectId(playerId);
+          
+          const player = await Temporary.findById(playerObjectId);
 
           if (!activePlayersPerGame[gameId]) {
             activePlayersPerGame[gameId] = [];
@@ -131,8 +135,16 @@ nextApp
           );
 
           if (!alreadyJoined) {
-            activePlayersPerGame[gameId].push({ playerId, username });
+            if (player) {
+              console.log("Player gefunden:", player); // Zum Debuggen, ob player wirklich existiert
+              const points = player.points !== undefined ? player.points : 0; // Wenn keine Punkte vorhanden sind, setze 0
+              activePlayersPerGame[gameId].push({ playerId, username, points });
+            } else {
+              console.log("Fehler: Spieler nicht gefunden"); // Gibt eine Fehlermeldung aus, wenn player nicht gefunden wird
+              activePlayersPerGame[gameId].push({ playerId, username });
+            }
           }
+          
 
           if (
             !game.players.some(
@@ -290,12 +302,63 @@ nextApp
 // Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {
 
-        if (gameId) {
-          io.to(gameId).emit("showRightAnswerNow", showAnswer);
-        } else {
-          console.log("Kein gameId empfangen!");
-        }
-      });
+          if (gameId) {
+            io.to(gameId).emit("showRightAnswerNow", showAnswer);
+
+            const game = await Game.findById(gameId);
+
+            if (game && showAnswer) {
+              const currentIndex = game.currentQuestionIndex;
+              const currentQuestionInGame = game.questions[currentIndex];
+              const currentId =  new mongoose.Types.ObjectId(currentQuestionInGame);
+              const currentQuestion = await Task.findById(currentId);
+
+
+              console.log("Aktuelle Frage:", currentQuestion);
+              console.log(game.questions)
+              console.log(currentQuestionInGame)
+
+              if (currentQuestion.playeranswers.length > 0 && currentQuestion.mode !== "buzzer" && currentQuestion.mode !== "open" && currentQuestion.mode !== "picture" && currentQuestion.pointsgiven === false) {
+                for (const answer of currentQuestion.playeranswers) {
+                  const playerObjectId = new mongoose.Types.ObjectId(answer.playerId);
+                  const tempplayer = await Temporary.findById(playerObjectId);
+                  console.log("Aktueller Spieler:", tempplayer);
+                  console.log("Answer:", answer);
+                  if (tempplayer) {
+
+                    if(answer.answer === currentQuestion.correctanswer && currentQuestion.mode !== "multiple") {
+                      tempplayer.points += currentQuestion.points;
+                      await tempplayer.save();
+                    } else if(currentQuestion.mode === "multiple") {
+                      const correctAnswerIndexInMultiple = parseInt(currentQuestion.correctanswer);
+                      const correctAnswer = currentQuestion.answers[correctAnswerIndexInMultiple];
+                      if(answer.answer === correctAnswer) {
+                        tempplayer.points += currentQuestion.points;
+                        await tempplayer.save();
+                      }
+                    }
+                  }
+                }
+                currentQuestion.pointsgiven = true;
+                await currentQuestion.save();
+              }
+              
+
+              await emitGameUpdate(io, gameId);
+            } else {
+              console.log("Spiel nicht gefunden!");
+            }
+
+          } else {
+            console.log("Kein gameId empfangen!");
+          }
+       });
+
+        
+
+
+            
+
 
       socket.on("nextQuestion", async ({ gameId }) => {
         try {
@@ -327,6 +390,12 @@ nextApp
 
             const TemporaryUsers = await Temporary.find({ yourgame: gameId, finalscore: false });
 
+            if (TemporaryUsers.length === 0) {
+              console.log("Es wurden keine Spieler mit diesen Kriterien gefunden.");
+            } else {
+              console.log("Gefundene Spieler:", TemporaryUsers);
+            }
+
             const scoreSnapshot = {
               date: new Date(),
               results: TemporaryUsers.map(user => ({
@@ -336,14 +405,20 @@ nextApp
               }))
             };
            
+            if (scoreSnapshot.results.length > 0) {
+              game.scores.push(scoreSnapshot);
+              console.log("Aktueller Spielstand:", game.scores);
+              console.log("Zu pushen:", scoreSnapshot);
+            } else {
+              console.log("Keine Spieler gefunden für dieses Spiel, daher wird kein Snapshot hinzugefügt.");
+            }
+
             game.started = false;
             game.currentQuestionIndex = 0;
-            game.scores.push(scoreSnapshot);
 
-            await Task.updateMany({ gameId: gameId }, { playeranswers: [] });
+            await Task.updateMany({ gameId: gameId }, { playeranswers: [], pointsgiven: false });
             await Temporary.updateMany({ yourgame: gameId }, { 
               points: 0,
-              finalscore: true,
             });
             await game.save();
             socket.emit("showRightAnswer", { gameId, showAnswer: false });

@@ -14,9 +14,10 @@ import StartGame from "../PanelPages/Game/StartGame";
 import Loading from "../Status/Loading";
 import GameSettings from "../PanelPages/Game/GameSettings";
 import ShowPlayers from "../PanelPages/Player/ShowPlayer";
+import GameStatistic from "../PanelPages/Game/GameStatistic";
 
 
-export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGameOpen, createGameOpen,}) {
+export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGameOpen, createGameOpen, setStatisticsOpen, statisticsOpen}) {
     const { data, isLoading } = useSWR("/api/game/getGames");
     
     const [activeSection, setActiveSection] = useState( {title: 'Fragen', subItem: 'Anlegen'} );
@@ -29,7 +30,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
     const menuItems = [
         { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
         { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
-        { title: 'Spiel', subItems: ['Starten', 'Erstellen', 'Einstellungen'] },
+        { title: 'Spiel', subItems: ['Starten', 'Statistik', 'Erstellen', 'Einstellungen'] },
     ];
 
 
@@ -41,7 +42,13 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
             setCreateGameOpen(false);
         }
 
-    }, [createGameOpen, setPanelOpen]);
+        if(statisticsOpen) {
+            setPanelOpen(true);
+            setActiveSection({ title: 'Spiel', subItem: 'Statistik' });
+            setStatisticsOpen(false);
+        }
+
+    }, [createGameOpen, setPanelOpen, statisticsOpen, setStatisticsOpen, setCreateGameOpen]);
 
     if(!session) {
         router.push("/auth/login");
@@ -162,6 +169,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
                     {activeSection.title === 'Spieler' && activeSection.subItem === 'Einladen' && <InvitePlayer/>}
 
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Starten' && <StartGame/>}
+                    {activeSection.title === 'Spiel' && activeSection.subItem === 'Statistik' && <GameStatistic/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Erstellen' && <AddGame/>}
                     {activeSection.title === 'Spiel' && activeSection.subItem === 'Einstellungen' && <GameSettings/>}
                   </div>

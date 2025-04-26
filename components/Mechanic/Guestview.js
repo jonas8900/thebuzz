@@ -11,11 +11,19 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     const [answerInput, setAnswerInput] = useState("");
     const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
-
-  
-
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
+    const [isQuestionReady, setIsQuestionReady] = useState(false);
+
+    useEffect(() => {
+      setIsQuestionReady(false); 
+      const timer = setTimeout(() => {
+        setIsQuestionReady(true); 
+      }, 200); 
+    
+      return () => clearTimeout(timer); 
+    }, [showrightAnswer]);
+    
 
     useEffect(() => {
       setHasBuzzed(false);
@@ -79,18 +87,21 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
       <>
         {gameByID?.started ? (
           <>
+          
+            <AnimatePresence mode="wait">
+
             <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950'>
-              <AnimatePresence mode="wait">
-                
+            {isQuestionReady && (
               <motion.div
                 className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl"
-                key={currentQuestion}
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1  }} 
-                exit={{ opacity: 0 }} 
-                transition={{ duration: 1 }}  
+                key={currentQuestionIndex} 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0}}
+                transition={{ duration: 1, delay: 0.5 }}
               >
-
+                
+                  
                   <div className="flex justify-between items-center mb-8">
                     <h2 className="text-sm md:text-base tracking-wide text-gray-300">
                       Frage {currentQuestionIndex + 1}
@@ -218,10 +229,13 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
                         </div>
 
                     )}
+                 
+                
                 </motion.div>
-                </AnimatePresence>
+              )}
             </div>
-
+            </AnimatePresence>
+        
 
 
           </>

@@ -34,6 +34,7 @@ export default async function handler(req, res) {
         mode: questionData.mode,
         gameId: questionData.gameId,
         points: questionData.points,
+        pointsgiven: questionData.pointsgiven,
         });
 
     const updatedGame = await Game.findByIdAndUpdate(
