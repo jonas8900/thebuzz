@@ -20,6 +20,11 @@ const taskSchema = new Schema({
   file: { type: String },
 });
 
+taskSchema.index({playeranswers: 1});
+taskSchema.index({gameId: 1});
+taskSchema.index({question: 1});
+taskSchema.index({correctanswer: 1});
+
 const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
 
 export default Task;

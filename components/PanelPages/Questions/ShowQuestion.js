@@ -6,6 +6,7 @@ import Loading from "../../Status/Loading";
 import { motion, AnimatePresence } from "framer-motion";
 import ErrorMessage from "../../Toast/ErrorMessage";
 import SuccessMessage from "../../Toast/SuccessMessage";
+import Image from "next/image";
 
 export default function AddQuestions() {
     const { data: session } = useSession();
@@ -52,7 +53,7 @@ export default function AddQuestions() {
 
     async function handleDeleteQuestion(id) {
         const response = await fetch("/api/game/questions/deleteQuestion", {
-            method: "POST",
+            method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
             },
@@ -119,6 +120,12 @@ export default function AddQuestions() {
                                                                 <li key={index} className="text-gray-200">{answer}</li>
                                                             ))}
                                                         </ul>
+                                                    )}
+
+                                                    {question.file && (
+                                                        <div className="flex justify-center items-center w-full h-full">
+                                                            <Image src={question.file} alt="Question" width={300} height={300} className="w-1/2 h-auto rounded-lg " />
+                                                        </div>
                                                     )}
 
                                                     {question.correctanswer && (

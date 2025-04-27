@@ -27,11 +27,16 @@ async function emitGameUpdate(io, gameId) {
       io.to(gameId).emit("gameUpdated", { game: updatedGame });
     }
 
-    if(updatedGame?.currentQuestionIndex + 1 >= updatedGame?.questions?.length) {
-      updatedGame.finished = true;
-      updatedGame.currentQuestionIndex = 0;
-      await updatedGame.save();
-    }
+    // if(updatedGame?.currentQuestionIndex + 1 >= updatedGame?.questions?.length) {
+    //   updatedGame.finished = true;
+    //   updatedGame.currentQuestionIndex = 0;
+
+    //   const gameInstance = await Game.findById(gameId); 
+    //   gameInstance.finished = updatedGame.finished;
+    //   gameInstance.currentQuestionIndex = updatedGame.currentQuestionIndex;
+    //   await gameInstance.save();
+
+    // }
 
 
   } catch (error) {
@@ -136,31 +141,38 @@ nextApp
 
           if (!alreadyJoined) {
             if (player) {
-              console.log("Player gefunden:", player); // Zum Debuggen, ob player wirklich existiert
-              const points = player.points !== undefined ? player.points : 0; // Wenn keine Punkte vorhanden sind, setze 0
+              console.log("Player gefunden:", player); 
+              const points = player.points !== undefined ? player.points : 0; 
               activePlayersPerGame[gameId].push({ playerId, username, points });
             } else {
-              console.log("Fehler: Spieler nicht gefunden"); // Gibt eine Fehlermeldung aus, wenn player nicht gefunden wird
               activePlayersPerGame[gameId].push({ playerId, username });
             }
           }
           
+          const isPlayerInGame = game.players.some(
+            (player) => player.playerId.toString() === playerObjectId.toString()
+          );
 
-          if (
-            !game.players.some(
-              (player) => player.playerId.toString() === playerObjectId.toString()
-            )
-          ) {
+          console.log("is player ingame", isPlayerInGame);
+
+          if (!isPlayerInGame) {
             console.log("Füge Spieler zur Datenbank hinzu");
             game.players.push({ playerId: playerObjectId, username });
             await game.save();
           } else {
             console.log("Spieler bereits in der Datenbank!");
           }
+      
+          await emitGameUpdate(io, gameId);
+          console.log("Aktive Spieler:", activePlayersPerGame[gameId]);
+          console.log("Aktive Spieler in der Datenbank:", game.players);
+
 
           io.to(gameId).emit("activePlayers", {
             players: activePlayersPerGame[gameId],
           });
+
+
         } catch (err) {
           console.error("Fehler beim Beitritt:", err);
         }
@@ -214,6 +226,7 @@ nextApp
           socket.emit("error", { message: "Spielstart fehlgeschlagen." });
         }
       });
+      
 
       socket.on("submitAnswer", async ({ gameId, playerId, username, answer }) => {
         console.log("Antwort erhalten:", { gameId, playerId, username, answer });
@@ -314,7 +327,7 @@ nextApp
               const currentQuestion = await Task.findById(currentId);
 
 
-              if (currentQuestion.playeranswers.length > 0 && currentQuestion.mode !== "buzzer" && currentQuestion.mode !== "open" && currentQuestion.mode !== "picture" && currentQuestion.pointsgiven === false) {
+              if (currentQuestion?.playeranswers?.length > 0 && currentQuestion.mode !== "buzzer" && currentQuestion.mode !== "open" && currentQuestion.mode !== "picture" && currentQuestion.pointsgiven === false) {
                 for (const answer of currentQuestion.playeranswers) {
                   const playerObjectId = new mongoose.Types.ObjectId(answer.playerId);
                   const tempplayer = await Temporary.findById(playerObjectId);
@@ -391,12 +404,19 @@ nextApp
               console.log("Gefundene Spieler:", TemporaryUsers);
             }
 
+
+            const PlayerInCurrentGame = TemporaryUsers.filter((tempUser) => 
+              activePlayersPerGame[gameId].some((player) => tempUser._id.toString() === player.playerId.toString())
+            );
+
+            console.log("Spieler in der aktuellen Runde:", PlayerInCurrentGame);
+
             const scoreSnapshot = {
               date: new Date(),
-              results: TemporaryUsers.map(user => ({
-                player: user._id,
-                points: user.points,
-                username: user.username
+              results: PlayerInCurrentGame.map(user => ({
+                player: user._id,        
+                points: user.points,     
+                username: user.username  
               }))
             };
            
@@ -493,41 +513,48 @@ nextApp
       });
     
 
-// Spieler wird bei Disconnect entfernt, wenn er in der Datenbank ist
       socket.on("disconnect", async () => {
-        console.log("Ein Spieler hat das Spiel verlassen.");
-      
         const gameId = socket.gameId;
         const playerId = socket.playerId;
-      
+
         if (gameId && playerId) {
           if (activePlayersPerGame[gameId]) {
             activePlayersPerGame[gameId] = activePlayersPerGame[gameId].filter(
               (player) => player.playerId !== playerId
             );
-      
+
             if (activePlayersPerGame[gameId].length === 0) {
               delete activePlayersPerGame[gameId];
             }
-      
+
             io.to(gameId).emit("activePlayers", {
               players: activePlayersPerGame[gameId] || [],
             });
           }
-      
+
+          console.log(`Spieler ${playerId} hat das Spiel verlassen`);
+          console.log("Aktive Spieler nach dem Entfernen:", activePlayersPerGame[gameId]);
+
           const currentGame = await Game.findById(gameId);
           if (currentGame) {
             currentGame.players = currentGame.players.filter(
               (player) => player.playerId.toString() !== playerId.toString()
             );
-            currentGame.save();
+
+            try {
+              await currentGame.save();
+              console.log("Spieler aus der Datenbank entfernt:", playerId);
+            } catch (err) {
+              console.error("Fehler beim Speichern des Spiels:", err);
+            }
           }
-          
+
           socket.leave(gameId);
         }
       });
-      
+
     });
+
 
     server.all("*", (req, res) => {
       return handle(req, res);

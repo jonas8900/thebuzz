@@ -26,14 +26,13 @@ export default function StartGame() {
         }
       }, [data, socket]);
 
-      useEffect(() => {
-      }, [players]);
 
     if(!data) return null;
 
     if(!session) {
         return null;
     };
+
 
     if(isLoading) return <Loading/>;
 
@@ -90,7 +89,6 @@ export default function StartGame() {
     }
 
 
-
     return (
         <>
           {showError && <ErrorMessage message={toastMessage} />}
@@ -98,7 +96,7 @@ export default function StartGame() {
           <div>
             <h1 className="text-xl font-semibold mb-4">Aktuelle Spieler in der Warteschlange:</h1>
             <ul className="flex flex-wrap gap-4">
-              {players.length > 0 &&
+              {players?.length > 0 &&
                 players.map((player) => (
                   <li
                     key={player.playerId}

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader } from "lucide-react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import Loading from "../../Status/Loading";
 import ErrorMessage from "../../Toast/ErrorMessage";
 import SuccessMessage from "../../Toast/SuccessMessage";
+import Image from "next/image";
+import imageCompression from "browser-image-compression";
 
 export default function AddQuestions() {
     const { data: session } = useSession();
@@ -18,6 +20,8 @@ export default function AddQuestions() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [question, setQuestion] = useState("");
     const [mode, setMode] = useState("truefalse"); 
+    const [file, setFile] = useState(null);
+    const fileInputRef = useRef(null);
         
     if (!data) return null;
     if (!chosenGameObject) return null;
@@ -104,19 +108,59 @@ export default function AddQuestions() {
         }
 
         if (mode === "picture") {
-            questionData = {
-                question: backendData.question,
-                correctanswer: backendData.Answer,
-                mode: mode,
-                gameId: chosenGame._id,
-                points: backendData.Points,
-                file: backendData.imageUpload,
-                pointsgiven: false,
 
-            }   
+            const formDataWithFile = new FormData();
+              
+            if (file) {
+                if (file instanceof Blob) {
+                    const fileWithCorrectType = new File([file], file.name, { type: file.type });
+                    formDataWithFile.set("image", fileWithCorrectType); 
+                } else {
+                    formDataWithFile.set("image", file); 
+                }
+            }
+            console.log(mode);
+            formDataWithFile.append("image", file);
+            formDataWithFile.append("question", backendData.question);
+            formDataWithFile.append("correctanswer", backendData.Answer);
+            formDataWithFile.append("mode", mode);
+            formDataWithFile.append("gameId", chosenGame._id);
+            formDataWithFile.append("points", backendData.Points);
+            formDataWithFile.append("pointsgiven", false);
+
+            const response = await fetch("/api/game/questions/createQuestionWithFile", {
+                method: "POST",
+                body: formDataWithFile,
+            });
+            
+            if(!response.ok) {
+                const errorData = await response.json();
+                setToastMessage(errorData.message);
+                setShowError(true);
+                setTimeout(() => {
+                    setShowError(false);
+                    setToastMessage("");
+                }, 3000);
+    
+            } else {
+                const successData = await response.json();
+                setToastMessage(successData.message);
+                setShowSuccess(true);
+                setTimeout(() => {
+                    setShowSuccess(false);
+                    setToastMessage("");
+                }, 3000);
+            }
+    
+            setQuestion("");
+            setOpenAnswer("");
+            setFile(null);
+            fileInputRef.current.value = null;
+            setOpenAnswerPoints("");
+            setAnswers([""]);
         }
         
-
+        if(mode !== "picture") {
         const response = await fetch("/api/game/questions/createQuestion", {
             method: "POST",
             headers: {
@@ -148,6 +192,7 @@ export default function AddQuestions() {
         setOpenAnswer("");
         setOpenAnswerPoints("");
         setAnswers([""]);
+        }
     }
 
     function handleAnswerChange(index, value) {
@@ -159,6 +204,42 @@ export default function AddQuestions() {
     function handleModeChange(e) {
         setMode(e.target.value);
     }
+
+    async function handleImageUploadConverter(file) {
+        const options = {
+            maxSizeMB: 0.3,  
+            quality: 0.8,    
+            maxWidthOrHeight: 900, 
+            useWebWorker: true,  
+            fileType: "image/webp",  
+            preserveExif: true, 
+        };
+    
+        try {
+            const compressedBlob = await imageCompression(file, options);
+            const compressedFile = new File([compressedBlob], file.name, { type: compressedBlob.type });
+    
+            return compressedFile; 
+        } catch (error) {
+            console.error("Fehler bei der Komprimierung:", error);
+            return file; 
+        }
+      }
+
+      function handleFileChange(event) {
+        const selectedFile = event.target.files[0];
+    
+        if (selectedFile) {
+          if (selectedFile.size > 10 * 1024 * 1024) {
+            alert("Datei ist zu groß. Maximale Größe ist 10MB.");
+            return;
+          }
+    
+          handleImageUploadConverter(selectedFile).then(compressedFile => {
+            setFile(compressedFile);  
+          });
+        }
+      }
 
     return (
         <>
@@ -216,13 +297,53 @@ export default function AddQuestions() {
                                     name="imageUpload"
                                     accept="image/*"
                                     className="p-2 pt-4 w-full border border-black bg-gray-100 text-black dark:bg-gray-900 dark:border-white dark:text-white rounded focus:outline-none"
+                                    onChange={handleFileChange}
+                                    ref={fileInputRef} 
                                 />
                                 <label
                                     htmlFor="imageUpload"
                                     className="absolute left-2 text-sm text-gray-500 dark:text-gray-400"
+                                    
                                 >
                                     Bild hochladen
                                 </label>
+                                {file ? (
+                                    <div className="relative w-2/4 mt-4 mx-auto"> 
+                                        <Image
+                                            src={URL.createObjectURL(file)}
+                                            alt="Vorschau"
+                                            width={200}
+                                            height={200}
+                                            className="object-contain w-full h-auto rounded-lg"
+                                        />
+                                        
+                                        <button
+                                            onClick={() => setFile(null)} 
+                                            className="absolute top-0 right-0 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold"
+                                            type="button"
+                                        >
+                                            ×
+                                        </button>
+                                     </div>
+                                
+
+                                    ) : (
+                                    <div className="flex flex-col items-center justify-center text-gray-400">
+                                        <svg
+                                        className="w-12 h-12 mb-2"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                        >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M7 16V4m0 0l-4 4m4-4l4 4m5 12h2a2 2 0 002-2v-7a2 2 0 00-2-2h-2.586a1 1 0 01-.707-.293l-1.414-1.414a1 1 0 00-.707-.293H9a2 2 0 00-2 2v10a2 2 0 002 2h2"
+                                        />
+                                        </svg>
+                                    </div>
+                                    )}
                                 <div className="relative w-full mt-4">
                                     <input
                                     type="text"

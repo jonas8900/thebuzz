@@ -161,7 +161,7 @@ export default function ShowAnswerToAll({
             </>
           )}
 
-          {question.mode === "open" && (
+          {(question.mode === "open" || question.mode === "picture") && (
             <>
               <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
@@ -234,7 +234,7 @@ export default function ShowAnswerToAll({
                   )}
                 </div>
               )}
-              {question.mode === "open" && (
+              {(question.mode === "open" || question.mode === "picture") && (
                 <div className="text-sm text-gray-500 dark:text-gray-300 mb-4">
                   <p className="mb-4">Punkteverteilung:</p>
                   {players.map((player) => (

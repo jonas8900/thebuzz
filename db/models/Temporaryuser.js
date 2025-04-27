@@ -12,6 +12,9 @@ const temporaryuserSchema = new Schema({
 });
 
 
+temporaryuserSchema.index({yourgame: 1});
+temporaryuserSchema.index({points: 1});
+temporaryuserSchema.index({finalscore: 1});
 
 const Temporaryuser = mongoose.models.Temporaryuser || mongoose.model("Temporaryuser", temporaryuserSchema);
 

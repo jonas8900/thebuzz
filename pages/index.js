@@ -8,9 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
-import JoinGame from "../components/startingPageGameContent/JoinGame";
-import ShowYourGame from "../components/startingPageGameContent/ShowYourGames";
-import useSWR from "swr";
+
 
 
 
@@ -18,8 +16,6 @@ export default function Home() {
   const { data: session, status } = useSession();
   const [panelOpen, setPanelOpen] = useState(false);
   const [dynamicData, setDynamicData] = useState('');
-  const [joingameModal, setJoingameModal] = useState(false);
-  const [yourgameModal, setYourgameModal] = useState(false);
   const [createGameOpen, setCreateGameOpen] = useState(false);
   const [statisticsOpen, setStatisticsOpen] = useState(false);
   const router = useRouter();

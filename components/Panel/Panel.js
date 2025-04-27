@@ -27,6 +27,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
     const [toastMessage, setToastMessage] = useState("");
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const { data: gameData, isLoading: isLoadingChosenGame } = useSWR("/api/game/getChosenGame");
     const menuItems = [
         { title: 'Fragen', subItems: ['Anlegen', 'Anzeigen'] },
         { title: 'Spieler', subItems: ['Anzeigen', 'Einladen'] },
@@ -34,21 +35,24 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
     ];
 
 
-    useEffect(() => {
-        if(createGameOpen) {
+    const chosenGame = gameData?.chosenGame || null;
 
+    useEffect(() => {
+        if (createGameOpen) {
             setPanelOpen(true);
             setActiveSection({ title: 'Spiel', subItem: 'Erstellen' });
             setCreateGameOpen(false);
         }
-
-        if(statisticsOpen) {
+    }, [createGameOpen, setPanelOpen, setCreateGameOpen]);
+    
+    useEffect(() => {
+        if (statisticsOpen) {
             setPanelOpen(true);
             setActiveSection({ title: 'Spiel', subItem: 'Statistik' });
             setStatisticsOpen(false);
         }
-
-    }, [createGameOpen, setPanelOpen, statisticsOpen, setStatisticsOpen, setCreateGameOpen]);
+    }, [statisticsOpen, setPanelOpen, setStatisticsOpen]);
+    
 
     if(!session) {
         router.push("/auth/login");
@@ -90,7 +94,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
           setToastMessage("");
         }, 3000);
     }
-    
+    console.log(chosenGame)
     return (
         <AnimatePresence>
             {panelOpen & dynamicData === "admin" && (

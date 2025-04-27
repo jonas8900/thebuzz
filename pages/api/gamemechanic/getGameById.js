@@ -18,7 +18,15 @@ export default async function handler(request, response) {
       }
 
   
-      const game = await Game.findById(x).populate("questions").lean();
+      const game = await Game.findById(x)
+      .populate({
+        path: "players.playerId", 
+        select: "username points"  
+      })
+      .populate("admin", "username")
+      .populate("scores.results.player")
+      .populate("questions")
+      .lean();
       
       console.log("API getGameById called with", x);
 

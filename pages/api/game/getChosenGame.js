@@ -34,10 +34,12 @@ export default async function handler(request, response) {
       const chosenGameId = user.chosengame; 
 
       const chosenGame = await Game.findById(chosenGameId)
-      .populate("players", "username")    
+      .populate({
+        path: "players.playerId", 
+        select: "username points"  
+      })  
       .populate("admin", "username")      
-      .populate("scores", "username") 
-      .populate("players", "points")
+      .populate("scores.results.player")
       .populate("questions")
       .lean();
     

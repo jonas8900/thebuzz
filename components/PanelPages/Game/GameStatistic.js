@@ -20,31 +20,37 @@ export default function GameStatistic() {
     const [sortedQuestions, setSortedQuestions] = useState([]);
     const [selectedScoreIndex, setSelectedScoreIndex] = useState(0);
 
-
-    //refresh game
     useEffect(() => {
-      if (!socket) return;
-        const gameId = data?.chosenGame?._id;
-    
-      function handleGameUpdate ({ game: updatedGame }) {
-        setGame(updatedGame);
-      };
-    
-      socket.on("gameUpdated", handleGameUpdate);
-      socket.emit("getUpdatedGame", { gameId });
-    
-      return () => {
-        socket.off("gameUpdated", handleGameUpdate);
-      };
-    }, [socket, data]);
-  
-    if(!game) {
-      setGame(data?.chosenGame);
-    }
+        if (!socket || !game) return;  
+      
+        const gameId = game._id;
+      
+        function handleGameUpdate({ game: updatedGame }) {
+          setGame(updatedGame);
+        }
+      
+        socket.on("gameUpdated", handleGameUpdate);
+        socket.emit("getUpdatedGame", { gameId });  
+      
+        return () => {
+          socket.off("gameUpdated", handleGameUpdate);  
+        };
+      }, [socket, game]); 
+
+      useEffect(() => {
+        if (data) {
+          setGame(data.chosenGame);
+        }
+      }, [data]);
+      
+      
+
 
     function handleScoreChange(event) {
         setSelectedScoreIndex(Number(event.target.value));
     }
+
+
   
 
   if (isLoading) return <Loading />;
@@ -52,6 +58,12 @@ export default function GameStatistic() {
     router.push("/auth/login");
     return null;
   }
+  if (!game) return (
+    <div className="flex justify-center items-center w-full h-full">
+        <p className="text-gray-500">Keine Spiele gefunden, lege erst Spiele an um Fragen zu sehen</p>
+    </div>
+    );
+
 
   if (error) return <div>Error loading game data.</div>;
 
@@ -96,16 +108,14 @@ export default function GameStatistic() {
                 .sort((a, b) => b.points - a.points) 
                 .map((score, index) => {
 
-                    const player = game?.players.find(p => 
-                        score.player === p?.playerId.toString()
-                      );
+                    console.log(score.player.username);
 
                     const isFirstPlace = index === 0;
 
 
                     return (
                         <motion.div
-                        key={score.player}
+                        key={score.player._id}
                         className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`} // Vergrößern für den ersten Platz
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -126,7 +136,7 @@ export default function GameStatistic() {
                               <FaCrown className="text-yellow-400 text-3xl" />
                             </motion.div>
                           )}
-                          <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>{player.username}</h2>
+                          <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>{score.player.username}</h2>
                           <p className="text-lg">Punkte: {score.points}</p>
                         </div>
                       </motion.div>
@@ -140,20 +150,6 @@ export default function GameStatistic() {
 
       <div className="mt-10 text-center">
       
-        {/* {showExplain && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mt-4 text-lg text-gray-300"
-          >
-            <p>
-              Diese Seite zeigt die Punktestände der Spieler während des Spiels. Die
-              Spieler werden in einer Tribünen-ähnlichen Ansicht angezeigt. Du kannst
-              auch eine Erklärung zur Funktionsweise des Spiels einblenden.
-            </p>
-          </motion.div>
-        )} */}
       </div>
 
       {showError && <ErrorMessage message={toastMessage} />}

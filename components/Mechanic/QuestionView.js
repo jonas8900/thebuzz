@@ -5,6 +5,7 @@ import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import { useSession } from "next-auth/react";
 import { usePlayerSocket } from "../context/playerContext";
 import { FaCrown } from "react-icons/fa";
+import Image from "next/image";
 
 export default function QuestionView({ currentQuestionIndex, questions, game, showrightAnswer, onClickRestart}) {
   const [visibleAnswers, setVisibleAnswers] = useState({});
@@ -122,7 +123,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
 
   return (
 
-    <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950">
+    <div className="w-full h-full flex items-center justify-center p-6 bg-gray-950 overflow-auto">
       <AnimatePresence mode="wait">
       {!game?.finished ? (
       <motion.div
@@ -140,7 +141,35 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
 
        
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentQuestion.mode === "open" && (
+          {currentQuestion.mode === "picture" && (
+            <>
+            <div className="col-span-2 flex justify-center">
+              <Image src={currentQuestion?.file} alt="Frage" width={500} height={500} className="rounded-lg shadow-lg w-1/2 col-span-2"  />
+            </div>
+            {currentQuestion?.playeranswers.map((answer) => (
+            <div key={answer.playerId} className="mb-4">
+              <button
+                onClick={() => toggleAnswer(answer.playerId)}
+                className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700"
+              >
+                {answer.username}
+                {visibleAnswers[answer.playerId] ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+
+              {visibleAnswers[answer.playerId] && (
+                <div className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md text-base shadow-inner">
+                  {answer.answer || <em>Keine Antwort</em>}
+                </div>
+                )}
+              </div>
+            ))}
+          </>
+          )}
+            {currentQuestion.mode === "open" && (
             <>
             {currentQuestion?.playeranswers.map((answer) => (
             <div key={answer.playerId} className="mb-4">
@@ -165,85 +194,85 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
             ))}
           </>
           )}
-        {currentQuestion.mode === "multiple" && (
-          <>
-          {currentQuestion.answers.map((answer, index) => {
-            const matchingPlayers = currentQuestion.playeranswers.filter(
-              (a) => a.answer === answer
-            );
+          {currentQuestion.mode === "multiple" && (
+            <>
+            {currentQuestion.answers.map((answer, index) => {
+              const matchingPlayers = currentQuestion.playeranswers.filter(
+                (a) => a.answer === answer
+              );
 
-            return (
-              <div key={index} className="bg-gray-700 text-white ring-2 ring-gray-500 rounded-xl p-4">
-                <div className="flex justify-between items-center ">
-                  <span className="text-lg font-medium">{answer}</span>
-                  <div className="flex ">
-                    {matchingPlayers.map((player) => (
-                      <button
-                        key={player.playerId}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleAnswer(player.playerId);
-                        }}
-                        className="flex items-center gap-1 text-sm text-white hover:text-gray-300"
-                      >
-                        {visibleAnswers[player.playerId] ? (
-                          <EyeOff className="w-4 h-4" />
-                        ) : (
-                          <Eye className="w-4 h-4" />
-                        )}
-                      </button>
-                    ))}
+              return (
+                <div key={index} className="bg-gray-700 text-white ring-2 ring-gray-500 rounded-xl p-4">
+                  <div className="flex justify-between items-center ">
+                    <span className="text-lg font-medium">{answer}</span>
+                    <div className="flex ">
+                      {matchingPlayers.map((player) => (
+                        <button
+                          key={player.playerId}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleAnswer(player.playerId);
+                          }}
+                          className="flex items-center gap-1 text-sm text-white hover:text-gray-300"
+                        >
+                          {visibleAnswers[player.playerId] ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {matchingPlayers.map(
-                  (player) =>
-                    visibleAnswers[player.playerId] && (
-                      <div
-                        key={player.playerId + "-visible"}
-                        className="text-sm text-gray-300"
-                      >
-                        <span className="italic">
-                          {player.username || "Keine Antwort"}
-                        </span>
-                      </div>
-                    )
-                )}
-              </div>
-            );
-          })}
-          </>
-        )}
-         {currentQuestion.mode === "truefalse" && (
-            <>
-            {currentQuestion?.playeranswers.map((answer) => (
-            <div key={answer.playerId} className="mb-4">
-              <button
-                onClick={() => toggleAnswer(answer.playerId)}
-                className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700"
-              >
-                {answer.username}
-                {visibleAnswers[answer.playerId] ? (
-                  <EyeOff className="w-5 h-5" />
-                ) : (
-                  <Eye className="w-5 h-5" />
-                )}
-              </button>
-
-              {visibleAnswers[answer.playerId] && (
-                <div className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md text-base shadow-inner">
-                  {answer.answer || <em>Keine Antwort</em>}
+                  {matchingPlayers.map(
+                    (player) =>
+                      visibleAnswers[player.playerId] && (
+                        <div
+                          key={player.playerId + "-visible"}
+                          className="text-sm text-gray-300"
+                        >
+                          <span className="italic">
+                            {player.username || "Keine Antwort"}
+                          </span>
+                        </div>
+                      )
+                  )}
                 </div>
-                )}
-              </div>
-            ))}
-          </>
+              );
+            })}
+            </>
           )}
-        
+          {currentQuestion.mode === "truefalse" && (
+              <>
+              {currentQuestion?.playeranswers.map((answer) => (
+              <div key={answer.playerId} className="mb-4">
+                <button
+                  onClick={() => toggleAnswer(answer.playerId)}
+                  className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700"
+                >
+                  {answer.username}
+                  {visibleAnswers[answer.playerId] ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
+
+                {visibleAnswers[answer.playerId] && (
+                  <div className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md text-base shadow-inner">
+                    {answer.answer || <em>Keine Antwort</em>}
+                  </div>
+                  )}
+                </div>
+              ))}
+            </>
+            )}
+          
             {currentQuestion.mode === "buzzer" && (
-              <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="flex flex-col items-center justify-center h-full text-center col-span-2">
                 {hasBuzzed ?  (
-                  <div className="mb-4">
+                  <div className="mb-4 w-1/2">
                     <h2 className="w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 text-lg font-medium bg-blue-600 text-white ring-2 ring-blue-300 hover:bg-blue-700">
                       {showBuzzeredUser.username} hat gebuzzert!
                     </h2>
@@ -276,6 +305,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
             )}
    
         </div>
+        
         <div className="mt-8 text-center">
             <button
               className="px-6 py-3 bg-violet-600 hover:bg-violet-900 transition text-white rounded-md text-lg shadow-md"
@@ -284,6 +314,7 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
               Antwort allen anzeigen
             </button>
           </div>
+
 
        
 
@@ -344,62 +375,52 @@ export default function QuestionView({ currentQuestionIndex, questions, game, sh
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {game && game?.scores?.length > 0 ? (
-  game?.scores[selectedScoreIndex]?.results?.length > 0 ? (
-    game?.scores[selectedScoreIndex]?.results
-      .sort((a, b) => b.points - a.points)
-      .map((score, index) => {
-        const player = game?.players.find(p => {
-          return score.player._id === p?.playerId?._id.toString() ;
-        });
-        const isFirstPlace = index === 0;
+            game?.scores[selectedScoreIndex]?.results?.length > 0 ? (
+              game?.scores[selectedScoreIndex]?.results
+                .sort((a, b) => b.points - a.points)
+                .map((score, index) => {
+                  
+                  const isFirstPlace = index === 0;
 
-        if (!player) {
-          return (
-            <motion.div key={score.player._id} className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <div className="text-center">
-                <p>Player not found</p>
-              </div>
-            </motion.div>
-          );
-        }
 
-        return (
-          <motion.div
-            key={score.player}
-            className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`}
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5, delay: index * 0.1 }}
-          >
-            <div className="text-center relative">
-              {isFirstPlace && (
-                <motion.div
-                  initial={{ y: 10 }}
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                  className="absolute top-[-20px] left-1/2 transform -translate-x-1/2"
-                >
-                  <FaCrown className="text-yellow-400 text-3xl" />
-                </motion.div>
-              )}
-              <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>
-                {player.username}
-              </h2>
-              <p className="text-lg">Punkte: {score.points}</p>
-            </div>
-          </motion.div>
-        );
-      })
-  ) : (
-    <p>No scores available</p>
-  )
-) : (
-  <p>Loading...</p>
-)}
+
+                  return (
+                    <motion.div
+                      key={score.player._id}
+                      className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`}
+                      initial={{ y: -50, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <div className="text-center relative">
+                        {isFirstPlace && (
+                          <motion.div
+                            initial={{ y: 10 }}
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                            className="absolute top-[-20px] left-1/2 transform -translate-x-1/2"
+                          >
+                            <FaCrown className="text-yellow-400 text-3xl" />
+                          </motion.div>
+                        )}
+                        <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>
+                          {score.player.username}
+                        </h2>
+                        <p className="text-lg">Punkte: {score.points}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })
+            ) : (
+              <p>No scores available</p>
+            )
+          ) : (
+            <p>Loading...</p>
+          )}
 
           </div>
           

@@ -98,11 +98,17 @@ export default function GamePanel() {
     const username = session.user.username;
   
     const alreadyJoined = gameByID.players.some((p) => p.id === playerId);
+
+    if (alreadyJoined) {
+      console.log("Spieler ist bereits beigetreten:", playerId);
+      return;
+    } 
+
   
     if (!alreadyJoined) {
       socket.emit("joinGame", { gameId: queryId, playerId, username });
     }
-  }, [gameByID, session]);
+  }, [gameByID, session, socket]);
   
 //Startgame
   useEffect(() => {
@@ -211,7 +217,8 @@ export default function GamePanel() {
       {!session.user.isGuest && (
         <>
       {game?.players.map((player) => {
-              const playerKey = player.username;
+      console.log(player, 'player');
+      const playerKey = player.username;
               return(
       <motion.div
         drag={!lockedPlayers[playerKey]?.locked}

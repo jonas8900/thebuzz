@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePlayerSocket } from "../context/playerContext";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import BigRedBuzzer from "../Buttons/RedBuzzer";
+import Image from "next/image";
 
 
 export default function GuestView({ gameByID, players, session, showrightAnswer }) {
@@ -37,7 +38,7 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     }, [currentQuestion, session?.user?.id, socket]);
 
     function handleAnswer(event) {
-        if(currentQuestion.mode === "open") {
+        if(currentQuestion.mode === "open" || currentQuestion.mode === "picture") {
           event.preventDefault();
 
           if (!answerInput) return;
@@ -115,7 +116,13 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
                     {currentQuestion.question}
                   </h3>
 
-                  {currentQuestion.mode === "open" && (
+                  {currentQuestion.mode === "picture" && (
+                    <div className="flex justify-center mb-6">
+                      <Image src={currentQuestion.file} alt="Frage Bild" width={500} height={500} className="rounded-lg shadow-lg w-1/2 col-span-2" />
+                    </div>
+                  )}
+
+                  {(currentQuestion.mode === "open" || currentQuestion.mode === "picture") && (
                     <div className="flex flex-col items-center space-y-6">
                       {currentQuestion.playeranswers.find(
                         (answer) => answer.playerId === session?.user.id
