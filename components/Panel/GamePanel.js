@@ -7,7 +7,7 @@ import { usePlayerSocket } from "../context/playerContext";
 import Loading from "../Status/Loading";
 import AdminView from "../Mechanic/Adminview";
 import GuestView from "../Mechanic/Guestview";
-
+import { signOut } from "next-auth/react";
 
 export default function GamePanel() {
   const router = useRouter();
@@ -79,6 +79,15 @@ export default function GamePanel() {
     };
   }, [socket]);
 
+  //Ausloggen und Session beenden wenn User nicht der Admin des Spieles ist aber in der Session ein Userdatensatz hat keinen Temporary so wird der User Gezwungen einen Temporaryuser zu erstellen
+  useEffect(() => {
+    if (!session?.user || !game) return; // Nur prüfen, wenn beides vorhanden ist
+  
+    if (session.user.id !== game?.admin?._id && !session.user.isGuest) {
+      console.log("User ist nicht Admin und kein Gast -> wird ausgeloggt");
+      signOut();
+    }
+  }, [session, game]);
 
   // //Buzzer zurücksetzen
   // useEffect(() => {
@@ -144,6 +153,7 @@ export default function GamePanel() {
   }
 
 
+
   if (!isReady || isLoading || !gameByID) return <Loading />;
 
 // Wenn ein Spieler joint erscheint ein neuer Spieler als Grabelement mit Locksymbol, hier kann man ihn an die Position ziehen und dann mit dem Lock Symbol fixieren
@@ -170,6 +180,11 @@ export default function GamePanel() {
   }
 
 
+  if(!game) return null;
+  console.log(game.admin._id, 'game');
+  console.log(session.user.id, 'userID');
+
+
 
   return (
     <>
@@ -188,7 +203,7 @@ export default function GamePanel() {
       )}
 
       <>
-            {session.user.isGuest && (
+          {(session.user.isGuest || (session.user.id !== game?.admin?._id && !session.user.isGuest)) &&  (
             
             <GuestView 
               gameByID={game}
@@ -197,11 +212,11 @@ export default function GamePanel() {
               session={session}
               showrightAnswer={showrightAnswer}
             />
-            )}
+          )}
         </>
 
         <>
-          {!session.user.isGuest && (
+          {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
             <AdminView 
               players={players} 
               gameByID={game}
@@ -214,7 +229,7 @@ export default function GamePanel() {
         
         </>
       </div>  
-      {!session.user.isGuest && (
+      {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
         <>
       {game?.players.map((player) => {
       console.log(player, 'player');

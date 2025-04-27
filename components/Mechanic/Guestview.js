@@ -28,7 +28,7 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
 
     useEffect(() => {
       setHasBuzzed(false);
-      if(currentQuestion.mode === "buzzer") {
+      if(currentQuestion?.mode === "buzzer") {
         if(currentQuestion?.playeranswers.length > 0) {
             setHasBuzzed(true);
           }
