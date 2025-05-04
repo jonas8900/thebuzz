@@ -8,9 +8,27 @@ const dotenv = require("dotenv");
 const crypto = require("crypto");  
 dotenv.config({ path: ".env.local" });
 
+
 function hashIp(ip) {
   return crypto.createHash("sha256").update(ip).digest("hex");
 }
+
+function getClientIp(socket, ) {
+  const rawIp =
+  socket.handshake.headers["x-forwarded-for"]?.split(",")[0] || socket.handshake.address;
+
+  const normalizeIp = (ip) => {
+    if (ip === "::1") return "127.0.0.1";
+    if (ip.startsWith("::ffff:")) return ip.replace("::ffff:", ""); 
+    return ip;
+  };
+
+
+  const clientIp = normalizeIp(rawIp);
+  return clientIp;
+}
+
+
 
 async function emitGameUpdate(io, gameId) {
   try {
@@ -88,20 +106,11 @@ nextApp
 
     io.on("connection", (socket) => {
       socket.on("joinGame", async ({ gameId, playerId, username }) => {
-        const rawIp =
-          socket.handshake.headers["x-forwarded-for"]?.split(",")[0] || socket.handshake.address;
 
-        const normalizeIp = (ip) => {
-          if (ip === "::1") return "127.0.0.1";
-          if (ip.startsWith("::ffff:")) return ip.replace("::ffff:", ""); 
-          return ip;
-        };
+        const clientIp = getClientIp(socket);
 
-        const clientIp = normalizeIp(rawIp);
+        console.log("Spieler beitritt", { gameId, playerId, username,  });
 
-        console.log("Spieler beitritt", { gameId, playerId, username, clientIp });
-
-        const hashedIp = hashIp(clientIp); 
 
         try {
           const game = await Game.findById(gameId);
@@ -111,12 +120,17 @@ nextApp
             return;
           }
 
-          // // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
-          // if (game.blockedips && game.blockedips.includes(hashedIp)) {
-          //   console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
-          //   socket.emit("error", { message: "Du bist für dieses Spiel gesperrt." });
-          //   return; // Verhindert die Verbindung, wenn die IP blockiert ist
-          // }
+          // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
+          const hashedIp = hashIp(clientIp);
+          console.log("Client IP:", clientIp);
+          console.log("Gehashte IP:", hashedIp);
+
+          if (game.blockedips.includes(hashedIp)) {
+            console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
+            socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
+            await emitGameUpdate(io, gameId);
+            return;
+          }
 
           socket.join(gameId);
           socket.gameId = gameId;
@@ -184,14 +198,46 @@ nextApp
 
       socket.on("watchGame", async ({ gameId }) => {
         console.log("Watcher tritt bei:", gameId);
+
+        const clientIp = getClientIp(socket);
+
+        const hashedIp = hashIp(clientIp);
+        console.log("Client IP:", clientIp);
+        console.log("Gehashte IP:", hashedIp);
+
+        const game = await Game.findById(gameId).select("blockedips");
+        if (!game) {
+          console.log("Game nicht gefunden!");
+          return;
+        }
+
+        if (game.blockedips.includes(hashedIp)) {
+          console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
+          socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
+          return;
+        }
+
         socket.join(gameId);
+
+        console.log("Aktive Spieler in der Watcher-Session:", activePlayersPerGame[gameId]);
 
         if (activePlayersPerGame[gameId]) {
           io.to(gameId).emit("activePlayers", {
             players: activePlayersPerGame[gameId],
           });
-          await emitGameUpdate(io, gameId);
         }
+
+        if(activePlayersPerGame[gameId] === undefined || activePlayersPerGame[gameId].length === 0 || activePlayersPerGame[gameId] === null) {
+          activePlayersPerGame[gameId] = [];
+
+          const game = await Game.findById(gameId);
+          if(game) {
+            game.players = [];
+            await game.save();
+          }
+        }
+
+        await emitGameUpdate(io, gameId);
       });
 
       socket.on("startGame", async ({ gameId }) => {

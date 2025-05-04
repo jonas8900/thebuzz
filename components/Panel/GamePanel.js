@@ -153,6 +153,7 @@ export default function GamePanel() {
   }
 
 
+  console.log(players);
 
   if (!isReady || isLoading || !gameByID) return <Loading />;
 
@@ -181,102 +182,120 @@ export default function GamePanel() {
 
 
   if(!game) return null;
-  console.log(game.admin._id, 'game');
-  console.log(session.user.id, 'userID');
+
 
 
 
   return (
     <>
+
+        {showBuzzerAnimation && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+            className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-3 rounded-2xl text-2xl font-bold shadow-2xl z-99999"
+          >
+            🚨 {showBuzzeredUser.username} hat gebuzzert!
+          </motion.div>
+        )}
+     {(session.user.isGuest || (session.user.id !== game?.admin?._id && !session.user.isGuest)) &&  (
      <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
 
-      {showBuzzerAnimation && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.5 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="absolute top-10 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-black px-6 py-3 rounded-2xl text-2xl font-bold shadow-2xl z-99999"
-        >
-          🚨 {showBuzzeredUser.username} hat gebuzzert!
-        </motion.div>
-      )}
-
-      <>
-          {(session.user.isGuest || (session.user.id !== game?.admin?._id && !session.user.isGuest)) &&  (
-            
-            <GuestView 
-              gameByID={game}
-              players={players}
-              socket={socket}
-              session={session}
-              showrightAnswer={showrightAnswer}
-            />
-          )}
-        </>
-
         <>
-          {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
-            <AdminView 
-              players={players} 
-              gameByID={game}
-              session={session}
-              handleStartGame={handleStartGame} 
-              showrightAnswer={showrightAnswer}
-              setShowRightAnswer={setShowRightAnswer}
+          
+              
+              <GuestView 
+                gameByID={game}
+                players={players}
+                socket={socket}
+                session={session}
+                showrightAnswer={showrightAnswer}
               />
-          )}
-        
-        </>
-      </div>  
+          
+          </>
+        </div>  
+       )}
+        {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
+        <div className="absolute top-0 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2  overflow-hidden text-white">
+
+          <>
+          
+              <AdminView 
+                players={players} 
+                gameByID={game}
+                session={session}
+                handleStartGame={handleStartGame} 
+                showrightAnswer={showrightAnswer}
+                setShowRightAnswer={setShowRightAnswer}
+                />
+          
+          
+          </>
+
+        </div>
+       )}
       {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
         <>
       {game?.players.map((player) => {
-      console.log(player, 'player');
       const playerKey = player.username;
-              return(
-      <motion.div
-        drag={!lockedPlayers[playerKey]?.locked}
-        key={playerKey}
-        animate={{
-          x: lockedPlayers[playerKey]?.x || 0,
-          y: lockedPlayers[playerKey]?.y || 0,
-        }}
-        onDragEnd={(event, info) => {
-          setLockedPlayers((prev) => {
-            const prevPlayer = prev[playerKey] || { x: 0, y: 0, locked: false };
-          
-            const newX = (prevPlayer.x || 0) + info.offset.x;
-            const newY = (prevPlayer.y || 0) + info.offset.y;
-          
-            const updated = {
-              ...prev,
-              [playerKey]: {
-                ...prevPlayer,
-                x: newX,
-                y: newY,
-              },
-            };
-          
-            localStorage.setItem("lockedPlayers", JSON.stringify(updated));
-            return updated;
-          });
-        }}
-        className={`absolute z-100 text-lg text-gray-200 ${
-          lockedPlayers[playerKey]?.locked ? "bg-violet-700" : "bg-gray-600"
-        } p-2 rounded-md cursor-move mb-2`}
-      >
-        {player.username} {player?.playerId?.points !== undefined ? `/ P: ${player.playerId.points}` : ''}
-        <button
-          onClick={() => toggleLock(playerKey)}
-          className="ml-2 px-2 py-1 bg-white text-black rounded"
+      return (
+        <>
+        <motion.div
+          drag={!lockedPlayers[playerKey]?.locked}
+          key={playerKey}
+          animate={{
+            x: lockedPlayers[playerKey]?.x || 0,
+            y: lockedPlayers[playerKey]?.y || 0,
+          }}
+          onDragEnd={(event, info) => {
+            setLockedPlayers((prev) => {
+              const prevPlayer = prev[playerKey] || { x: 0, y: 0, locked: false };
+            
+              const newX = (prevPlayer.x || 0) + info.offset.x;
+              const newY = (prevPlayer.y || 0) + info.offset.y;
+            
+              const updated = {
+                ...prev,
+                [playerKey]: {
+                  ...prevPlayer,
+                  x: newX,
+                  y: newY,
+                },
+              };
+            
+              localStorage.setItem("lockedPlayers", JSON.stringify(updated));
+              return updated;
+            });
+          }}
+          className={`absolute z-100 text-lg text-gray-200 ${
+            lockedPlayers[playerKey]?.locked ? "bg-violet-700" : "bg-gray-600"
+          } p-2 rounded-md cursor-move mb-2`}
         >
-          {lockedPlayers[playerKey]?.locked ? "Unlock" : "Lock"}
-        </button>
-      </motion.div>
-      )}
-      )}
+          {player.username} {player?.playerId?.points !== undefined ? `/ P: ${player.playerId.points}` : ''}
+          <button
+            onClick={() => toggleLock(playerKey)}
+            className="ml-2 px-2 py-1 bg-white text-black rounded"
+          >
+            {lockedPlayers[playerKey]?.locked ? "Unlock" : "Lock"}
+          </button>
+        </motion.div>
       </>
+      )}
+      )}
+      <div className="absolute bottom-0 left-0 w-full flex justify-center gap-20 px-4 z-50">
+        {game?.players.map((player) => (
+          <div
+            key={`bar-${player.username}`}
+            className="w-1/5 min-w-[100px] h-55 flex items-center justify-center border bg-gray-900 rounded-2xl shadow-2xl text-white"
+          >
+          </div>
+        ))}
+      </div>
+      </>
+
+
     )}
     </>
     

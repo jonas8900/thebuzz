@@ -2,10 +2,12 @@
 import useSWR from "swr";
 import { useSession } from "next-auth/react";
 import Loading from "../../Status/Loading";
+import { usePlayerSocket } from "@/components/context/playerContext";
 
 export default function ShowPlayers() {
     const { data, error, mutate, isLoading } = useSWR("/api/game/getChosenGame");
     const { data: session, status } = useSession();
+    const { players, socket } = usePlayerSocket();
     
     const game = data?.chosenGame;
 

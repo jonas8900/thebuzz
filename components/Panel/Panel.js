@@ -94,7 +94,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
           setToastMessage("");
         }, 3000);
     }
-    console.log(chosenGame)
+
     return (
         <AnimatePresence>
             {panelOpen & dynamicData === "admin" && (

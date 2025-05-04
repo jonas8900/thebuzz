@@ -40,6 +40,7 @@ export default function StartGame() {
     
     async function handleKickPlayer(playerId) {
       const gameId = data.chosenGame._id;
+      console.log(playerId, "playerId");
 
       const response = await fetch("/api/game/kick/deleteTemporaryUser", {
         method: "POST",

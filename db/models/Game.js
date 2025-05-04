@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 
 const { Schema } = mongoose;
 
@@ -29,6 +30,24 @@ const gameSchema = new Schema({
     blockedips: [{ type: String }],
     createdAt: { type: Date, default: Date.now },
 });
+
+
+gameSchema.pre("save", function (next) {
+  const game = this;
+  if(game.isModified("blockedips")) {
+    game.blockedips = game.blockedips.map(ip => {
+      const hashedIp = crypto.createHash("sha256").update(ip).digest("hex");
+      return hashedIp;
+    });
+  }
+  next();
+}
+);
+
+
+
+
+
 
 gameSchema.index({ players: 1 });
 gameSchema.index({ admin: 1 });

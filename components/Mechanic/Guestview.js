@@ -5,6 +5,8 @@ import { usePlayerSocket } from "../context/playerContext";
 import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import BigRedBuzzer from "../Buttons/RedBuzzer";
 import Image from "next/image";
+import { useRouter } from "next/router";
+
 
 
 export default function GuestView({ gameByID, players, session, showrightAnswer }) {
@@ -15,6 +17,7 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
     const [isQuestionReady, setIsQuestionReady] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
       setIsQuestionReady(false); 
@@ -36,6 +39,17 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         setHasBuzzed(false);
       }
     }, [currentQuestion, session?.user?.id, socket]);
+
+    useEffect(() => {
+      socket.on("banned", ({ message }) => {
+        console.log(message);
+        router.push("/banned");
+      });
+    
+      return () => {
+        socket.off("banned");
+      };
+    }, []);
 
     function handleAnswer(event) {
         if(currentQuestion.mode === "open" || currentQuestion.mode === "picture") {
