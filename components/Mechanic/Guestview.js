@@ -9,11 +9,28 @@ import { useRouter } from "next/router";
 
 
 
-export default function GuestView({ gameByID, players, session, showrightAnswer }) {
+export default function GuestView({ players, session, showrightAnswer }) {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answerInput, setAnswerInput] = useState("");
     const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
+    const [gameByID, setGameByID] = useState(null);
+
+    useEffect(() => {
+      if (!socket) return;
+    
+      socket.on("gameUpdated", ({ game }) => {
+        setGameByID(game);
+      });
+    
+      // Optional: hole initialen Status manuell per emit oder API, falls nötig
+    
+      return () => {
+        socket.off("gameUpdated");
+      };
+    }, [socket]);
+    
+
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
     const [isQuestionReady, setIsQuestionReady] = useState(false);
@@ -45,11 +62,13 @@ export default function GuestView({ gameByID, players, session, showrightAnswer 
         console.log(message);
         router.push("/banned");
       });
+     
     
       return () => {
+        window.location.reload();
         socket.off("banned");
       };
-    }, []);
+    }, [ socket, router ]);
 
     function handleAnswer(event) {
         if(currentQuestion.mode === "open" || currentQuestion.mode === "picture") {

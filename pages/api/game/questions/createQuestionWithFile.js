@@ -55,7 +55,7 @@ export default async function handler(req, res) {
         const points = Array.isArray(fields.points) ? Number(fields.points[0]) : Number(fields.points);
         const pointsgiven = Array.isArray(fields.pointsgiven) ? fields.pointsgiven[0] === 'true' : fields.pointsgiven;
       
-        console.log(gameId, question, correctanswer, mode, points, pointsgiven);
+
       
         const file = files.image?.[0];
       

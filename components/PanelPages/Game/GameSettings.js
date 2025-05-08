@@ -33,6 +33,7 @@ export default function GameSettings() {
 
   const gamemodes = ["random", "buzzergame", "lowtohigh", "sorted"];
 
+
   const handleChange = async (e) => {
     const newMode = e.target.value;
 
@@ -46,6 +47,42 @@ export default function GameSettings() {
       if (!res.ok) throw new Error("Fehler beim Aktualisieren des Modus");
 
       setToastMessage("Spielmodus aktualisiert");
+      setShowSuccess(true);
+      mutate("/api/game/getChosenGame");
+    } catch (err) {
+      setToastMessage(err.message);
+      setShowError(true);
+    }
+  };
+
+  async function handleReleaseUser(entry) {
+
+    if (!entry) {
+      setToastMessage("Kein User gefunden");
+      setShowError(true);
+      return;
+
+    }
+    if (!game) {
+      setToastMessage("Kein Spiel gefunden");
+      setShowError(true);
+      return;
+    }
+
+    const userId = entry.user._id;
+
+    try {
+      const res = await fetch(`/api/game/kick/releaseUser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, gameId: game._id }),
+      });
+
+      if (!res.ok) throw new Error("Fehler beim Freigeben des Users");
+
+      setToastMessage("User freigegeben");
       setShowSuccess(true);
       mutate("/api/game/getChosenGame");
     } catch (err) {
@@ -96,7 +133,6 @@ export default function GameSettings() {
   }
 
 
-
   return (
     <>
       {game?.gamemode && game?.questions.length ? (
@@ -127,7 +163,22 @@ export default function GameSettings() {
             ))}
             </select>
 
-
+            <div className="mb-8 ">
+                <h2 className="text-lg font-semibold mb-2">Blockierte Spieler</h2>
+                <ul className="space-y-2">
+                  {game.blockedusers.map((entry) => (
+                    <li key={entry._id} className="flex justify-between items-center p-2 bg-gray-200 dark:bg-gray-800 rounded shadow">
+                      <span>{entry.user?.username || "Unbekannter Benutzer"}</span>
+                      <button
+                        onClick={() => handleReleaseUser(entry)}
+                        className="ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      >
+                        Freigeben
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
             {game?.gamemode === "sorted" && (
             <>

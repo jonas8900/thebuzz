@@ -28,21 +28,52 @@ const gameSchema = new Schema({
     currentQuestionIndex: { type: Number, default: 0 },
     finished: { type: Boolean, default: false },
     blockedips: [{ type: String }],
+    blockedusers: [{
+      user: { type: Schema.Types.ObjectId, ref: "Temporaryuser" },
+      blockedip: { type: String }
+    }],    
     createdAt: { type: Date, default: Date.now },
 });
 
 
+
+function normalizeIp(ip) {
+  if (ip === "::1") return "127.0.0.1";
+  if (ip?.startsWith("::ffff:")) return ip.split(":").pop();
+  return ip;
+}
+
+function isHashed(ip) {
+  return /^[a-f0-9]{64}$/.test(ip);
+}
+
 gameSchema.pre("save", function (next) {
-  const game = this;
-  if(game.isModified("blockedips")) {
-    game.blockedips = game.blockedips.map(ip => {
-      const hashedIp = crypto.createHash("sha256").update(ip).digest("hex");
-      return hashedIp;
+  if (this.isModified("blockedips")) {
+    this.blockedips = this.blockedips.map(ip => {
+      const normalizedIp = normalizeIp(ip);
+      return isHashed(normalizedIp)
+        ? normalizedIp
+        : crypto.createHash("sha256").update(normalizedIp).digest("hex");
     });
   }
+
+  if (this.isModified("blockedusers")) {
+    this.blockedusers = this.blockedusers.map(entry => {
+      const normalizedIp = normalizeIp(entry.blockedip);
+      const hashedIp = isHashed(normalizedIp)
+        ? normalizedIp
+        : crypto.createHash("sha256").update(normalizedIp).digest("hex");
+      return {
+        ...entry,
+        blockedip: hashedIp
+      };
+    });
+  }
+
   next();
-}
-);
+});
+
+
 
 
 

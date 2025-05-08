@@ -41,6 +41,11 @@ export default async function handler(request, response) {
       .populate("admin", "username")      
       .populate("scores.results.player")
       .populate("questions")
+      .populate({
+        path: "blockedusers.user",
+        model: "Temporaryuser",
+        select: "username"
+      })
       .lean();
     
     

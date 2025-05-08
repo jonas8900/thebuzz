@@ -3,6 +3,9 @@ import Temporaryuser from "../../../../db/models/Temporaryuser";
 import Game from "../../../../db/models/Game";
 import { authOptions } from "../../auth/[...nextauth]";
 import dbConnect from "../../../../db/connect";
+
+
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
@@ -42,20 +45,16 @@ export default async function handler(req, res) {
     const temporaryUser = await Temporaryuser.findById(playerId);
 
     if (!temporaryUser) {
-
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (!game.blockedips.includes(ip) && temporaryUser) {
+    if (!game.blockedips.includes(ip) && temporaryUser && !game.blockedusers.some(user => user.user.toString() === temporaryUser._id.toString())) {
       game.blockedips.push(ip);
+      game.blockedusers.push({ user: temporaryUser._id, blockedip: ip });
       await game.save();
     } else {
       return res.status(403).json({ message: "Your IP has already been blocked for this game or User not found" });
     }
-
-    // Delete the temporary user
-    temporaryUser.deleteOne({ _id: playerId });
-    console.log("Temporary user deleted:");
 
     return res.status(201).json({ message: "User deleted and IP blocked", game: game });
   } catch (error) {

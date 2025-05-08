@@ -30,7 +30,7 @@ export default function Game() {
   const [showSuccess, setShowSuccess] = useState(false);
   let amIAdmin = false;
   const { data: gameByID, mutate, isLoading } = useSWR(
-    isReady && queryId ? `/api/gamemechanic/getGameById?x=${queryId}` : null
+    isReady && queryId ? `/api/gamemechanic/getGameByIdWithoutQuestions?x=${queryId}` : null
   );
 
   useEffect(() => {

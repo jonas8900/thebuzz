@@ -16,7 +16,7 @@ export default function GamePanel() {
   const { data: session } = useSession();
   const { players, socket } = usePlayerSocket();
   const { data: gameByID, isLoading } = useSWR(
-    isReady && queryId ? `/api/gamemechanic/getGameById?x=${queryId}` : null,
+    isReady && queryId ? `/api/gamemechanic/getGameByIdWithoutQuestions?x=${queryId}` : null,
   );
   const [lockedPlayers, setLockedPlayers] = useState({});
   const [game, setGame] = useState(null);
@@ -45,7 +45,6 @@ export default function GamePanel() {
   //showrightanswer
   useEffect(() => {
     socket.on("showRightAnswerNow", (showAnswer) => {
-      console.log("Empfangenes showAnswer:", showAnswer);  
       setShowRightAnswer(showAnswer); 
     });
   
@@ -57,7 +56,6 @@ export default function GamePanel() {
 //Buzzer gedrückt
   useEffect(() => {
     socket.on("buzzerPressed", (username) => {
-      console.log("Buzzer gedrückt von:", username);
       const audio = new Audio(`/sounds/sound${Math.floor(Math.random() * 6) + 1}.mp3`);
 
       audio.play().catch((error) => {
@@ -148,12 +146,7 @@ export default function GamePanel() {
     };
   }, [socket, gameByID]);
 
-  if(!game) {
-    setGame(gameByID);
-  }
 
-
-  console.log(players);
 
   if (!isReady || isLoading || !gameByID) return <Loading />;
 
@@ -172,7 +165,6 @@ export default function GamePanel() {
       return updated;
     });
   }
-
   
 //startet das Spiel
   function handleStartGame() {
@@ -180,11 +172,7 @@ export default function GamePanel() {
     socket.emit("startGame", { gameId: game._id });
   }
 
-
   if(!game) return null;
-
-
-
 
   return (
     <>
@@ -202,12 +190,8 @@ export default function GamePanel() {
         )}
      {(session.user.isGuest || (session.user.id !== game?.admin?._id && !session.user.isGuest)) &&  (
      <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
-
         <>
-          
-              
               <GuestView 
-                gameByID={game}
                 players={players}
                 socket={socket}
                 session={session}
@@ -219,9 +203,7 @@ export default function GamePanel() {
        )}
         {(!session.user.isGuest && (session.user.id === game?.admin?._id)) && (
         <div className="absolute top-0 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2  overflow-hidden text-white">
-
           <>
-          
               <AdminView 
                 players={players} 
                 gameByID={game}
@@ -230,8 +212,6 @@ export default function GamePanel() {
                 showrightAnswer={showrightAnswer}
                 setShowRightAnswer={setShowRightAnswer}
                 />
-          
-          
           </>
 
         </div>
@@ -284,7 +264,7 @@ export default function GamePanel() {
       </>
       )}
       )}
-      <div className="absolute bottom-0 left-0 w-full flex justify-center gap-20 px-4 z-50">
+      {/* <div className="absolute bottom-0 left-0 w-full flex justify-center gap-20 px-4 z-50">
         {game?.players.map((player) => (
           <div
             key={`bar-${player.username}`}
@@ -292,7 +272,7 @@ export default function GamePanel() {
           >
           </div>
         ))}
-      </div>
+      </div> */}
       </>
 
 

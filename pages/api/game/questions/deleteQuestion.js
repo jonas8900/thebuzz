@@ -27,7 +27,6 @@ export default async function handler(req, res) {
 
   const { id } = req.body;
 
-  console.log(id);
 
   try {
 
@@ -55,7 +54,6 @@ export default async function handler(req, res) {
     }
 
     const game = await Game.findById(question.gameId);
-    console.log(game);
 
     if (game) {
       game.questions = game.questions.filter((questionId) => questionId.toString() !== id.toString());

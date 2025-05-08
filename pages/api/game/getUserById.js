@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     
     const session = await getServerSession(req, res, authOptions);
     
-    if (!session) {
+    if (!session || session.user.isGuest) {
         return res.status(403).json({ message: "No access" });
     }
 

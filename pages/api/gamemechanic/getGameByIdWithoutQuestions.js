@@ -25,7 +25,6 @@ export default async function handler(request, response) {
       })
       .populate("admin", "username")
       .populate("scores.results.player")
-      .populate("questions")
       .lean();
   
       return response.status(200).json(game);
