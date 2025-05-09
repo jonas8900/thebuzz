@@ -50,11 +50,14 @@ export default async function handler(req, res) {
 
           try {
             await s3.deleteObject(deleteParams).promise();
+            const questionDelete = await Task.findByIdAndDelete(question._id);
             console.log("Datei erfolgreich aus S3 gelöscht:", fileName);
+            console.log("Frage gelöscht:", questionDelete);
           } catch (error) {
             console.error("Fehler beim Löschen der Datei aus S3:", error);
             return res.status(500).json({ error: "Fehler beim Löschen der Datei aus S3." });
           }
+          
         } else {
          const questionDelete = await Task.findByIdAndDelete(question._id);
           if (!questionDelete) {

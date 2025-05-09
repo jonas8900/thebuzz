@@ -31,7 +31,8 @@ export default function GameSettings() {
   const game = data?.chosenGame || null;
   const [sortedQuestions, setSortedQuestions] = useState([]);
 
-  const gamemodes = ["random", "buzzergame", "lowtohigh", "sorted"];
+  // const gamemodes = ["random", "buzzergame", "lowtohigh", "sorted"];
+  const gamemodes = ["random", "sorted"];
 
 
   const handleChange = async (e) => {
@@ -162,6 +163,7 @@ export default function GameSettings() {
                 </option>
             ))}
             </select>
+            <p className="text-gray-700 dark:text-gray-300">Spielmodus ist bisher in der Testphase</p>
 
             <div className="mb-8 ">
                 <h2 className="text-lg font-semibold mb-2">Blockierte Spieler</h2>
