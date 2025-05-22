@@ -8,8 +8,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
-import JoinGame from "../components/startingPageGameContent/JoinGame";
-import ShowYourGame from "../components/startingPageGameContent/ShowYourGames";
+
 import useSWR from "swr";
 import GamePanel from "../components/Panel/GamePanel";
 import ErrorMessage from "../components/Toast/ErrorMessage";

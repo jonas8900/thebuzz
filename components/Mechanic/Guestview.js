@@ -6,6 +6,7 @@ import ShowAnswerToAll from "../GameMechanic/showAnswerToAll";
 import BigRedBuzzer from "../Buttons/RedBuzzer";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { FaCrown } from "react-icons/fa";
 
 
 
@@ -15,6 +16,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
     const [hasBuzzed, setHasBuzzed] = useState(false);
     const { socket } = usePlayerSocket();
     const [gameByID, setGameByID] = useState(null);
+    const [showAnswer, setShowAnswer] = useState(false);
 
     useEffect(() => {
       if (!socket) return;
@@ -22,8 +24,6 @@ export default function GuestView({ players, session, showrightAnswer }) {
       socket.on("gameUpdated", ({ game }) => {
         setGameByID(game);
       });
-    
-      // Optional: hole initialen Status manuell per emit oder API, falls nötig
     
       return () => {
         socket.off("gameUpdated");
@@ -35,6 +35,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
     const [isQuestionReady, setIsQuestionReady] = useState(false);
     const router = useRouter();
+    const [selectedScoreIndex, setSelectedScoreIndex] = useState(0);
 
     useEffect(() => {
       setIsQuestionReady(false); 
@@ -70,6 +71,12 @@ export default function GuestView({ players, session, showrightAnswer }) {
       };
     }, [ socket, router ]);
 
+    useEffect(() => {
+      if (gameByID?.scores?.length > 0) {
+        setSelectedScoreIndex(gameByID.scores.length - 1); 
+      }
+    }, [gameByID?.scores]);
+
     function handleAnswer(event) {
         if(currentQuestion.mode === "open" || currentQuestion.mode === "picture") {
           event.preventDefault();
@@ -87,15 +94,19 @@ export default function GuestView({ players, session, showrightAnswer }) {
 
       if (currentQuestion.mode === "multiple" || currentQuestion.mode === "truefalse") {
         const answer = {
-            playerId: session?.user.id,
-            username: session?.user.username,
-            answer: event,
+g
         };
         socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
         setSelectedAnswer(null);
       }
      
     }
+
+    function handleScoreChange(event) {
+      setSelectedScoreIndex(Number(event.target.value));
+    }
+
+
 
     function handleBuzzer() {
 
@@ -113,7 +124,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
         setSelectedAnswer(null);
       }
     }
-
+console.log(players)
 
     return (
       <>
@@ -126,6 +137,29 @@ export default function GuestView({ players, session, showrightAnswer }) {
 
             <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950'>
             {isQuestionReady && (
+              <>
+               <div className="absolute left-10 top-10 w-1/4 bg-gray-800 p-4 rounded-xl">
+              <h2 className="text-xl font-semibold mb-4">Aktuelle Punkte</h2>
+              {players.length > 0 && (
+                <ul>
+                  {players.map((player) => (
+                    <>
+                      {player.hasOwnProperty('points') && (
+                        <li key={player.username} className="text-lg text-gray-300">
+                          {player.username}: {player.points} P
+                          {currentQuestion?.playeranswers.find(
+                            (answer) => answer.playerId === player.playerId
+                          ) && (
+                            <span className="text-green-400 ml-2">✔️</span>
+                          )}
+                        </li>
+                      )}
+                    </>
+                  ))}
+                </ul>
+              )}
+            </div>
+              
               <motion.div
                 className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl"
                 key={currentQuestionIndex} 
@@ -160,14 +194,32 @@ export default function GuestView({ players, session, showrightAnswer }) {
                       {currentQuestion.playeranswers.find(
                         (answer) => answer.playerId === session?.user.id
                       ) ? (
-                        <h4 className="text-xl text-center font-semibold text-green-400">
-                          Deine Antwort:{" "}
-                          {
-                            currentQuestion.playeranswers.find(
-                              (answer) => answer.playerId === session?.user.id
-                            ).answer
-                          }
-                        </h4>
+                         showAnswer ? (
+                          <>
+                            <h4 className="text-xl text-center font-semibold text-green-400">
+                              Deine Antwort: {" "}
+                              {
+                                currentQuestion.playeranswers.find(
+                                  (answer) => answer.playerId === session?.user.id
+                                ).answer
+                              }
+                            </h4>
+                            <button 
+                              onClick={() => setShowAnswer(false)}
+                              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md"
+                            >
+                              Deine antwort verbergen
+                            </button>
+                          </>
+                          ) : (
+                            <button
+                              onClick={() => setShowAnswer(true)}
+                              className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md"
+                            >
+                              Deine antwort anzeigen
+                            </button>
+                          )
+
                       ) : (
                         <form
                           onSubmit={handleAnswer}
@@ -175,7 +227,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
                         >
                           <div className="relative w-full">
                             <input
-                              type="text"
+                              type="password"
                               id="answer"
                               name="answer"
                               required
@@ -243,6 +295,9 @@ export default function GuestView({ players, session, showrightAnswer }) {
                             (answer) => answer.playerId === session?.user.id
                           );
                           const playerGivenAnswer = foundAnswer?.answer;
+                          console.log(playerGivenAnswer,'playerGivenAnswer')
+                          console.log(boolValue,'boolValue')
+                          console.log(foundAnswer,'foundAnswer')
 
                           return (
                             <button
@@ -251,7 +306,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
                               disabled={!!foundAnswer}
                               className={`w-full cursor-pointer bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 
                                 ${foundAnswer ? "opacity-100 hover:cursor-not-allowed bg-gray-700" : ""}
-                                ${playerGivenAnswer === boolValue ? "bg-green-600 hover:bg-green-600" : "hover:bg-gray-700"}
+                                ${String(playerGivenAnswer) === String(boolValue) ? "bg-green-600 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-700"}
                               `}
                             >
                               {label}
@@ -272,6 +327,7 @@ export default function GuestView({ players, session, showrightAnswer }) {
                  
                 
                 </motion.div>
+                </>
               )}
             </div>
             </AnimatePresence>
@@ -358,7 +414,95 @@ export default function GuestView({ players, session, showrightAnswer }) {
             <p className="text-md text-gray-400">Der Admin kann nun ein neues Spiel starten oder das aktuelle auswerten.</p>
 
         </motion.div>
+
+
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          className="text-center mt-14 px-4"
+        >
+          <p className="text-lg mb-8">Hier sind die Spielergebnisse und Punktestände</p>
+
+          <div className="text-center mb-6">
+            <select
+              value={selectedScoreIndex}
+              onChange={handleScoreChange}
+              className="bg-gray-700 text-white p-2 rounded-lg mb-6"
+            >
+              {gameByID && gameByID.scores?.map((score, index) => (
+                <option key={index} value={index}>
+                  Score {index + 1} - {new Date(score.date).toLocaleString('de-DE', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: false
+                  })}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {gameByID && gameByID?.scores?.length > 0 ? (
+            gameByID?.scores[selectedScoreIndex]?.results?.length > 0 ? (
+              gameByID?.scores[selectedScoreIndex]?.results
+                .sort((a, b) => b.points - a.points)
+                .map((score, index) => {
+                  
+                  const isFirstPlace = index === 0;
+
+
+
+                  return (
+                    <motion.div
+                      key={score.player._id}
+                      className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`}
+                      initial={{ y: -50, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <div className="text-center relative">
+                        {isFirstPlace && (
+                          <motion.div
+                            initial={{ y: 10 }}
+                            animate={{ y: [0, -8, 0] }}
+                            transition={{
+                              duration: 3,
+                              repeat: Infinity,
+                              ease: "easeInOut",
+                            }}
+                            className="absolute top-[-20px] left-1/2 transform -translate-x-1/2"
+                          >
+                            <FaCrown className="text-yellow-400 text-3xl" />
+                          </motion.div>
+                        )}
+                        <h2 className={`text-xl font-semibold ${isFirstPlace ? 'text-yellow-500 text-3xl' : ''}`}>
+                          {score.player.username}
+                        </h2>
+                        <p className="text-lg">Punkte: {score.points}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })
+            ) : (
+              <p>No scores available</p>
+            )
+          ) : (
+            <p>Loading...</p>
+          )}
+
+          </div>
+          
+          </motion.div>
+
+
       </>
+
+
     )}
       </>
     );
