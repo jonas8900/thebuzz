@@ -94,7 +94,9 @@ export default function GuestView({ players, session, showrightAnswer }) {
 
       if (currentQuestion.mode === "multiple" || currentQuestion.mode === "truefalse") {
         const answer = {
-g
+            playerId: session?.user.id,
+            username: session?.user.username,
+            answer: event,
         };
         socket.emit("submitAnswer", { gameId: gameByID._id, playerId: session?.user.id, username: session?.user.username, answer });
         setSelectedAnswer(null);

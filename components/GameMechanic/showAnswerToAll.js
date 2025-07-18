@@ -190,7 +190,7 @@ export default function ShowAnswerToAll({
 
                 <p className="text-md text-gray-600 dark:text-gray-300 mt-4">
                   {question?.playeranswers[0]?.username} war am schnellsten und hat die
-                  richtige Antwort gegeben!
+                  richtige Antwort gegeben! Seine Antwort: {question?.playeranswers[0]?.answer}
                 </p>
               </div>
             </>
@@ -249,7 +249,7 @@ export default function ShowAnswerToAll({
                         }
                         `}
                       onClick={() => handleSetPointsToUser(player.playerId)}>
-                      {player.username}
+                      {player.username} mit der Antwort: {player.answer}
                     </button>
                   ))}
                 </div>
