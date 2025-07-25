@@ -102,6 +102,7 @@ export default function AddQuestions() {
                                     <div className="flex flex-col gap-6 w-full  border-gray-300 rounded-lg ">
                                         <h2 className="text-xl font-bold">Fragen</h2>
                                         {data.chosenGame.questions.map((question) => {
+                                            
                                         
                                         return( 
                                               <div key={question._id} className="relative flex flex-col gap-2 w-full h-full p-4 border border-gray-300 rounded-lg shadow-md">
@@ -131,11 +132,15 @@ export default function AddQuestions() {
                                                     {question.correctanswer && (
                                                         <>
                                                             {question.mode === "multiple" ? (
-                                                                <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
+                                                                <p className="text-red-300">Richtige Antwort: {Number(question.correctanswer)+1}</p>
                                                             ) : (
                                                                 <p className="text-red-300">Richtige Antwort: {question.correctanswer}</p>
                                                             )}
                                                         </>
+                                                    )}
+
+                                                    {question.points && (
+                                                        <p className="text-gray-200">Punkte: {question.points}</p>
                                                     )}
                                                 </div>
                                             );

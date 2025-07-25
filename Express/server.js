@@ -125,7 +125,7 @@ nextApp
         const clientIp = getClientIp(socket);
 
 
-        console.log("Spieler beitritt", { gameId, playerId, username,  });
+        // console.log("Spieler beitritt", { gameId, playerId, username,  });
 
 
         try {
@@ -138,8 +138,8 @@ nextApp
 
           // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
           const hashedIp = hashIp(clientIp);
-          console.log("join Client IP:", clientIp);
-          console.log("Join Gehashte IP:", hashedIp);
+          // console.log("join Client IP:", clientIp);
+          // console.log("Join Gehashte IP:", hashedIp);
 
           if (game.blockedips.includes(hashedIp)) {
             console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
@@ -227,7 +227,7 @@ nextApp
           return;
         }
 
-        console.log(game.blockedips.includes(hashedIp), "blockedIPS")
+  
 
 
         if (game.blockedips.includes(hashedIp)) {
@@ -238,7 +238,6 @@ nextApp
 
         socket.join(gameId);
 
-        console.log("Aktive Spieler in der Watcher-Session:", activePlayersPerGame[gameId]);
 
         if (activePlayersPerGame[gameId]) {
           io.to(gameId).emit("activePlayers", {
@@ -295,7 +294,7 @@ nextApp
       
 
       socket.on("submitAnswer", async ({ gameId, playerId, username, answer }) => {
-        console.log("Antwort erhalten:", { gameId, playerId, username, answer });
+        
         try {
           const game = await Game.findById(gameId)
             .populate("players", "username")
