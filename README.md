@@ -157,4 +157,3 @@ Issues und PRs sind willkommen. Bitte achte auf:
 - klare Commit-Messages
 - kurze PRs mit Kontext
 - keine sensiblen Secrets in Commits
-```
