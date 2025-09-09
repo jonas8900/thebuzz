@@ -1,6 +1,6 @@
 # thebuzz — Realtime-Buzzer für Quiz & Spielabende
 
-**thebuzz** ist eine schlanke, latenzarme Buzzer-App: Host startet eine Runde, Spieler*innen treten per Link/QR bei und **der erste Klick zählt** — inkl. Sperre für alle Nachfolgenden, Reset durch den Host und klarer Anzeige, wer gewonnen hat.
+**thebuzz** ist eine schlanke, latenzarme Spiele-App: Host startet eine Runde, Spieler*innen treten per Link/QR bei und bei einer Buzzerfrage gilt z.B. **der erste Klick zählt** — inkl. Sperre für alle Nachfolgenden, Reset durch den Host und klarer Anzeige, wer gewonnen hat. Es gibt verschiedene Fragekategorien wie Bilderfragen, Multiple Choice, Offene Frage und Wahr oder Falsch.
 
 > Live-Demo: https://thebuzz-cfde756a15ca.herokuapp.com
 
@@ -8,13 +8,14 @@
 
 ## Features
 
-- **Echtzeit-Buzzer**: “First click wins”, alle anderen werden sofort gesperrt, bis der Host zurücksetzt.  
+- **Echtzeit-Buzzer**: “First click wins”, alle anderen werden sofort gesperrt, bis der Host zurücksetzt.
+- **Mehrere Fragekategorien**: z.B. Multiple Choice, Bilderfrage (wer ist das auf dem Bild?), Offene Frage (Wie viele Einwohner hat Deutschland) etc.
 - **Mehrere Räume**: Trennung per Game-ID/Room (keine Cross-Talks zwischen Spielen).  
 - **Host-Kontrollen**: Reset/Unlock, optional Spieler blockieren/entfernen.  
 - **UI-Feedback**: deutliche Hervorhebung/Auszeichnung des Gewinners, Animationen.  
-- **Simple Join-Experience**: per Direktlink oder QR (mobil-freundlich).  
-- **Optionale Abuse-Guards**: Entprellung/Rate-Limit; IP-basierte Blocks (gehasht) möglich.  
-- **Erweiterbar**: Score-Board, Team-Modus, Timer, Soundeffekte usw. sind leicht nachrüstbar.
+- **Simple Join-Experience**: per Direktlink oder QR (mobil-freundlich) mit eingabe eines Benutzernames ist der Benutzername gleich (bei Absturtz des Browsers) wird er aufgrund des localstorages nachgeladen.  
+- **Optionale Abuse-Guards**: Rate-Limit; IP-basierte Blocks (gehasht) möglich.  
+- **Erweiterbar**: Team-Modus, Timer usw. sind leicht nachrüstbar.
 
 ---
 
