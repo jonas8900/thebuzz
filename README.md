@@ -8,13 +8,13 @@
 
 ## Features
 
-- ⚡ **Echtzeit-Buzzer**: “First click wins”, alle anderen werden sofort gesperrt, bis der Host zurücksetzt.  
-- 👥 **Mehrere Räume**: Trennung per Game-ID/Room (keine Cross-Talks zwischen Spielen).  
-- 👩‍⚖️ **Host-Kontrollen**: Reset/Unlock, optional Spieler blockieren/entfernen.  
-- 🎉 **UI-Feedback**: deutliche Hervorhebung/Auszeichnung des Gewinners, Animationen.  
-- 📲 **Simple Join-Experience**: per Direktlink oder QR (mobil-freundlich).  
-- 🔐 **Optionale Abuse-Guards**: Entprellung/Rate-Limit; IP-basierte Blocks (gehasht) möglich.  
-- 🧩 **Erweiterbar**: Score-Board, Team-Modus, Timer, Soundeffekte usw. sind leicht nachrüstbar.
+- **Echtzeit-Buzzer**: “First click wins”, alle anderen werden sofort gesperrt, bis der Host zurücksetzt.  
+- **Mehrere Räume**: Trennung per Game-ID/Room (keine Cross-Talks zwischen Spielen).  
+- **Host-Kontrollen**: Reset/Unlock, optional Spieler blockieren/entfernen.  
+- **UI-Feedback**: deutliche Hervorhebung/Auszeichnung des Gewinners, Animationen.  
+- **Simple Join-Experience**: per Direktlink oder QR (mobil-freundlich).  
+- **Optionale Abuse-Guards**: Entprellung/Rate-Limit; IP-basierte Blocks (gehasht) möglich.  
+- **Erweiterbar**: Score-Board, Team-Modus, Timer, Soundeffekte usw. sind leicht nachrüstbar.
 
 ---
 
