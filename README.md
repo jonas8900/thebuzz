@@ -117,8 +117,8 @@ Procfile         # Heroku Process-Definition
 - [ ] Soundeffekte beim Buzz & beim Reset
 - [ ] Team-Modus (Gruppenbuzzer, Mehrfachgewinner)
 - [ ] Timer/Countdown pro Runde
-- [ ] Admin-Seite „Blockierte Spieler“ (Block/Unblock, Grund, Ablaufdatum)
-- [ ] Optionale Persistenz (Gewinner-Historie, Scores)
+- [X] Admin-Seite „Blockierte Spieler“ (Block/Unblock, Grund, Ablaufdatum)
+- [X] Optionale Persistenz (Gewinner-Historie, Scores)
 - [ ] Mehrsprachigkeit (DE/EN)
 
 ---
