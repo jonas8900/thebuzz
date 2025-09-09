@@ -138,19 +138,6 @@ Procfile         # Heroku Process-Definition
 
 ---
 
-## Lizenz
-
-Dieses Projekt kann unter der **MPL-2.0** betrieben werden (enthält Patentlizenz).  
-Falls noch nicht geschehen, füge eine `LICENSE` (MPL-2.0) im Repo-Root hinzu und markiere Dateien optional mit:
-
-```txt
-SPDX-License-Identifier: MPL-2.0
-```
-
-> Wenn du **kommerzielle Forks/Verkäufe untersagen** willst, nutze stattdessen eine **proprietäre EULA** („All rights reserved“) oder eine Doppellizenz (Open Source + kommerzielle Lizenz).
-
----
-
 ## Mitmachen
 
 Issues und PRs sind willkommen. Bitte achte auf:
