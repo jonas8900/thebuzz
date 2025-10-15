@@ -9,10 +9,12 @@ export default function Login() {
     const [toastMessage, setToastMessage] = useState("");
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [loadingSubmit, setLoadingSubmit] = useState(false);
     const router = useRouter();
 
     async function handleSubmit(event) {
         event.preventDefault();
+        setLoadingSubmit(true);
     
         const formData = new FormData(event.target);
         const email = formData.get("email");
@@ -33,6 +35,7 @@ export default function Login() {
             setTimeout(() => {
                 setShowError(false);
                 setToastMessage("");
+                setLoadingSubmit(false)
             }, 4000);
         } else {
             setShowSuccess(true);
@@ -40,6 +43,7 @@ export default function Login() {
             setTimeout(() => {
                 setShowSuccess(false);
                 setToastMessage("");
+                setLoadingSubmit(false)
                 router.push("/");
             }, 2000);
         }
@@ -47,7 +51,7 @@ export default function Login() {
 
     return (
         <>
-            <LoginScreen handleSubmit={handleSubmit} />
+            <LoginScreen handleSubmit={handleSubmit} loadingSubmit={loadingSubmit} />
             {showError && <ErrorMessage message={toastMessage} /> }
             {showSuccess && <SuccessMessage message={toastMessage} />}
         </>

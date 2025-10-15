@@ -6,13 +6,14 @@ import ErrorMessage from "../Toast/ErrorMessage";
 import SuccessMessage from "../Toast/SuccessMessage";
 import { signIn } from "next-auth/react";
 
-export default function LoginScreen({ handleSubmit }) {
+export default function LoginScreen({ handleSubmit, loadingSubmit }) {
   const [typeSwitch, setTypeSwitch] = useState("password");
   const [forgotPassword, setForgotPassword] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
   const overlayRef = useRef(null);
   const overlayRegisteredRef = useRef(null);
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function LoginScreen({ handleSubmit }) {
 
   async function handleSubmitRegistration(event) {
     event.preventDefault();
+    setLoading(true);
 
     const formData = new FormData(event.target);
     const data = Object.fromEntries(formData);
@@ -40,25 +42,24 @@ export default function LoginScreen({ handleSubmit }) {
     if (!response.ok) {
       setShowError(true);
       setToastMessage("Etwas ist schiefgelaufen!");
+      setLoading(false);
       setTimeout(() => {
         setShowError(false);
         setToastMessage("");
       }, 5000);
       return;
-    }
-
-    if (response.ok) {
+    } else {
       setShowSuccess(true);
       setToastMessage("Erfolgreich Registriert! 🎉");
+      setLoading(false);
       setTimeout(() => {
         setShowSuccess(false);
         setToastMessage("");
         setRegistered(false);
         router.push("/auth/login");
       }, 5000);
-    } else {
-      alert("Etwas ist schiefgelaufen, versuche es später noch einmal.");
     }
+
   }
 
   function handlePasswortTypeHidden() {
@@ -87,7 +88,15 @@ export default function LoginScreen({ handleSubmit }) {
       event.preventDefault();
 
       const formData = new FormData(event.target);
-      const email = formData.get("email");
+      
+      const raw = formData.get("email");
+      const email = raw
+        .toString()
+        .normalize("NFKC")
+        .trim()
+        .replace(/[\u200B-\u200D\uFEFF]/g, "") 
+        .toLowerCase();
+
 
       try {
         const response = await fetch("/api/admin/forgot-password", {
@@ -226,8 +235,9 @@ export default function LoginScreen({ handleSubmit }) {
               <div class="mt-8">
                 <button
                   class="cursor-pointer bg-purple-700 text-white font-bold py-2 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200"
+                  disabled={loadingSubmit}
                   >
-                  Login
+                  {loadingSubmit ? "Lade.." : "Login"}
                 </button>
               </div>
             </form>
@@ -258,14 +268,14 @@ export default function LoginScreen({ handleSubmit }) {
               <div class="p-4 sm:p-7">
                 <div class="text-center">
                   <h1 class="block text-2xl font-bold text-gray-800 dark:text-white">
-                    Forgot password?
+                    Password vergessen?
                   </h1>
                   <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    Remember your password ?&nbsp;
+                    Erinnerst du dich doch ?&nbsp;
                     <a
                       class="text-blue-600 decoration-2 hover:underline font-medium"
                       onClick={() => setForgotPassword(false)}>
-                      Login here
+                      hier einloggen
                     </a>
                   </p>
                 </div>
@@ -291,8 +301,11 @@ export default function LoginScreen({ handleSubmit }) {
                       </div>
                       <button
                         type="submit"
-                        class="cursor-pointer bg-purple-700 text-white font-bold py-3 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200">
-                        Reset password
+                        class="cursor-pointer bg-purple-700 text-white font-bold py-3 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200"
+                        disabled={loading}
+                        
+                        >
+                        {loading ? "Sendet.." : "Bestätigen"}
                       </button>
                     </div>
                   </form>
@@ -407,8 +420,10 @@ export default function LoginScreen({ handleSubmit }) {
                       </div>
                       <button
                         type="submit"
-                        class="cursor-pointer mt-5 bg-purple-700 text-white font-bold py-3 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200">
-                        Registrieren
+                        class="cursor-pointer mt-5 bg-purple-700 text-white font-bold py-3 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200"
+                        disabled={loading}
+                        >
+                        {loading ? "Lade..." : "Registrieren"}
                       </button>
                     </div>
                   </form>

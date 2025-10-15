@@ -34,7 +34,7 @@ export default function GamePanel() {
   }, [lockedPlayers]);
 
 
-  //Spieler aus dem Localstorage holen die schonmal geloggt worden sind
+  //Spieler aus dem Localstorage holen die schonmal eingeloggt worden sind
   useEffect(() => {
     const savedLockedPlayers = localStorage.getItem("lockedPlayers");
     if (savedLockedPlayers) {
@@ -53,12 +53,12 @@ export default function GamePanel() {
     };
   }, [socket]);
   
-//Buzzer gedrückt
+//Buzzer gedrückt, randomsound erscheint
   useEffect(() => {
     socket.on("buzzerPressed", (username) => {
       const audio = new Audio(`/sounds/sound${Math.floor(Math.random() * 6) + 1}.mp3`);
 
-      audio.play().catch((error) => {
+      audio.play().catch(() => {
         const userPrompt = window.confirm("Möchtest du die automatische Wiedergabe für diese Seite zulassen?");
         if (userPrompt) {
           audio.play(); 
@@ -86,16 +86,6 @@ export default function GamePanel() {
       signOut();
     }
   }, [session, game]);
-
-  // //Buzzer zurücksetzen
-  // useEffect(() => {
-  //   socket.on("resetBuzzer", () => {
-  //     console.log("Buzzer zurückgesetzt");
-  //     setShowBuzzeredUser("");
-  //     setShowBuzzerAnimation(false);
-  //   });
-  //   }, [socket]) 
-
 
 //Joingame
   useEffect(() => {
@@ -151,6 +141,7 @@ export default function GamePanel() {
   if (!isReady || isLoading || !gameByID) return <Loading />;
 
 // Wenn ein Spieler joint erscheint ein neuer Spieler als Grabelement mit Locksymbol, hier kann man ihn an die Position ziehen und dann mit dem Lock Symbol fixieren
+// wird im localstorage gespeichert
   function toggleLock(playerKey) {
     setLockedPlayers((prev) => {
       const prevPlayer = prev[playerKey] || { locked: false, x: 0, y: 0 };

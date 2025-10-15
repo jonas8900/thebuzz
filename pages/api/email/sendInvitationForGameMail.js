@@ -3,6 +3,7 @@ import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../db/connect";
 import nodemailer from "nodemailer";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { normalizeEmail } from "@/lib/normalizeInput";
 
 const rateLimiter = new RateLimiterMemory({
     points: 10, 
@@ -36,7 +37,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Einladungslink fehlt." });
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = normalizeEmail(email);
   if (!emailRegex.test(email)) {
     return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
   }
@@ -56,7 +57,7 @@ export default async function handler(req, res) {
   const mailOptions = {
     from: process.env.GMAIL_USER, 
     to: email, 
-    subject: `Ankerquiz Einladung zu einem Spiel von ${sendUser}`, 
+    subject: `TheBuzz Einladung zu einem Spiel von ${sendUser}`, 
     html: `
             <html>
                 <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">

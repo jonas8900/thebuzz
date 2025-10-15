@@ -1,5 +1,6 @@
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
+import crypto from "crypto";
 
 
 export default async function handler(req, res) {
@@ -13,10 +14,12 @@ export default async function handler(req, res) {
   if (!token || !newPassword) {
     return res.status(400).json({ message: "Token und neues Passwort sind erforderlich" });
   }
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
   try {
+
     const user = await User.findOne({
-      passwordResetToken: token,
+      passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: Date.now() },
     });
 

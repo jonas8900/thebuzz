@@ -45,18 +45,6 @@ async function emitGameUpdate(io, gameId) {
       io.to(gameId).emit("gameUpdated", { game: updatedGame });
     }
 
-    // if(updatedGame?.currentQuestionIndex + 1 >= updatedGame?.questions?.length) {
-    //   updatedGame.finished = true;
-    //   updatedGame.currentQuestionIndex = 0;
-
-    //   const gameInstance = await Game.findById(gameId); 
-    //   gameInstance.finished = updatedGame.finished;
-    //   gameInstance.currentQuestionIndex = updatedGame.currentQuestionIndex;
-    //   await gameInstance.save();
-
-    // }
-
-
   } catch (error) {
     console.error("Fehler bei emitGameUpdate:", error);
   }
@@ -79,16 +67,16 @@ mongoose
     dbName: process.env.DATABASE_NAME,
   })
   .then(() => {
-    console.log("✅ MongoDB verbunden");
+    console.log("MongoDB verbunden");
   })
-  .catch((error) => console.log("❌ MongoDB Fehler:", error));
+  .catch((error) => console.log("MongoDB Fehler:", error));
 
-console.log("🚀 Server wird vorbereitet...");
+console.log("Server wird vorbereitet...");
 
 nextApp
   .prepare()
   .then(() => {
-    console.log("✅ Next.js ist bereit!");
+    console.log("Next.js ist bereit!");
 
     const server = express();
     const httpServer = http.createServer(server);
@@ -105,28 +93,8 @@ nextApp
     const activePlayersPerGame = {};
 
     io.on("connection", (socket) => {
-
-      // socket.on("getGameById", async ({ gameId }) => {
-      //   try {
-      //     const game = await Game.findById(gameId);
-      //     if (!game) {
-      //       socket.emit("gameData", { error: "Spiel nicht gefunden" });
-      //       return;
-      //     }
-      //     socket.emit("gameData", game);
-      //   } catch (error) {
-      //     console.error("Fehler beim Abrufen des Spiels:", error);
-      //     socket.emit("gameData", { error: "Serverfehler" });
-      //   }
-      // });
-
       socket.on("joinGame", async ({ gameId, playerId, username }) => {
-
         const clientIp = getClientIp(socket);
-
-
-        // console.log("Spieler beitritt", { gameId, playerId, username,  });
-
 
         try {
           const game = await Game.findById(gameId);
@@ -136,10 +104,7 @@ nextApp
             return;
           }
 
-          // Prüfen, ob die gehashte IP in der Blockierungsliste des Spiels enthalten ist
           const hashedIp = hashIp(clientIp);
-          // console.log("join Client IP:", clientIp);
-          // console.log("Join Gehashte IP:", hashedIp);
 
           if (game.blockedips.includes(hashedIp)) {
             console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);

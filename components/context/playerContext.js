@@ -11,7 +11,6 @@ export default function PlayerSocketProvider({ children }) {
   const [players, setPlayers] = useState([]);
 
   useEffect(() => {
-    console.log("Verbindung zum Socket hergestellt");
     socket.on("activePlayers", ({ players }) => {
       setPlayers(players);
     });

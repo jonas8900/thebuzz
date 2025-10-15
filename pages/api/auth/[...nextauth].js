@@ -121,40 +121,33 @@ export const authOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Credentials/Gast laufen wie gehabt:
       if (!account || account.provider === "credentials" || account.provider === "guest") {
         return !!user;
       }
 
-      // -------- Google: User in der DB anlegen/aktualisieren --------
       if (account.provider === "google") {
         await dbConnect();
 
         const email = profile?.email?.toLowerCase();
         if (!email) return false;
 
-        // optional: Nur bestimmte Domains erlauben
-        // if (!email.endsWith("@deinedomain.de")) return false;
 
-        // Username fallback (einfach, kollisions-unanständig – bei Bedarf verbessern)
         const baseUsername =
           (profile?.name || email.split("@")[0] || "user")
             .toLowerCase()
             .replace(/\s+/g, "_");
 
-        // Hole existierenden User oder lege an
         let dbUser = await User.findOne({ email });
         if (!dbUser) {
           dbUser = await User.create({
             email,
             name: profile?.name || "",
             username: baseUsername,
-            role: "user",                     // Standardrolle für Google
-            image: profile?.picture || null,  // falls dein Schema das Feld hat
-            provider: "google",               // falls vorhanden
+            role: "user",                     
+            image: profile?.picture || null, 
+            provider: "google",              
           });
         } else {
-          // Optionale Aktualisierung von Profilfeldern
           const update = {};
           if (!dbUser.name && profile?.name) update.name = profile.name;
           if (!dbUser.image && profile?.picture) update.image = profile.picture;
@@ -164,13 +157,11 @@ export const authOptions = {
           }
         }
 
-        // Hänge DB-Userdaten an `user`, damit `jwt()` sie übernehmen kann
         user.id = dbUser._id.toString();
         user.email = dbUser.email;
         user.name = dbUser.name;
         user.username = dbUser.username;
         user.role = dbUser.role;
-        // gameId/guest gibt es hier nicht -> bewusst leer lassen
 
         return true;
       }
@@ -184,7 +175,6 @@ export const authOptions = {
     },
 
     async jwt({ token, user, account, profile }) {
-      // Wenn wir gerade eingeloggt haben, `user` enthält frische Daten:
       if (user) {
         token.id = user.id;
         token.email = user.email;

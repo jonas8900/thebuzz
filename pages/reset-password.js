@@ -13,11 +13,13 @@ export default function ResetPassword() {
     const [toastMessage, setToastMessage] = useState("");
     const [showError, setShowError] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [disabled, setDisabled] = useState(false);
 
   async function handleSubmit(e){
     e.preventDefault();
     setLoading(true);
     setError("");
+    setDisabled(true);
 
     if (newPassword !== confirmPassword) {
       setError("Die Passwörter stimmen nicht überein.");
@@ -53,6 +55,7 @@ export default function ResetPassword() {
 
         const data = await response.json();
         if (!response.ok) {
+            setShowError(true);
             setError(data.message || "Fehler beim Zurücksetzen des Passworts.");
             setLoading(false);
             return;
@@ -61,24 +64,33 @@ export default function ResetPassword() {
         setNewPassword("");
         setConfirmPassword("");
             
-        setLoading(false);
-
+        
+        setShowSuccess(true);
         setToastMessage("Passwort erfolgreich zurückgesetzt! 🎉");
         setTimeout(() => {
           setShowSuccess(false);
           setToastMessage("");
           router.push("/auth/login");
+          setLoading(false);
         }, 5000);
     }
     catch (error) {
       console.error("Fehler beim Zurücksetzen des Passworts:", error);
+      setShowError(true);
       setError("Fehler beim Zurücksetzen des Passworts.");
       setLoading(false);
+      setTimeout(() => {
+          setShowError(false);
+          setToastMessage("");
+        }, 5000);
     }
+    setDisabled(false);
   };
 
   return (
     <>
+    {showError && <ErrorMessage message={toastMessage} /> }
+    {showSuccess && <SuccessMessage message={toastMessage} />}
     <div className="absolute top-1/2 left-1/2 w-full transform -translate-x-1/2 -translate-y-1/2 max-w-sm mx-auto my-10 p-5 bg-gray-900 shadow-md rounded-md">
       <h2 className="text-2xl font-bold text-center mb-4">Passwort zurücksetzen</h2>
       <form onSubmit={handleSubmit}>
@@ -100,6 +112,7 @@ export default function ResetPassword() {
             onChange={(e) => setNewPassword(e.target.value)}
             required
             className="w-full p-3 border rounded-md"
+            disabled={disabled}
           />
         </div>
 
@@ -115,21 +128,20 @@ export default function ResetPassword() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             className="w-full p-3 border rounded-md"
+            disabled={disabled}
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={disabled}
           className="w-full bg-blue-500 text-white py-3 rounded-md"
         >
-          {loading ? "Lädt..." : "Passwort zurücksetzen"}
+          Passwort zurücksetzen
         </button>
       </form>
               
     </div>
-        {showError && <ErrorMessage message={toastMessage} />}
-        {showSuccess && <SuccessMessage message={toastMessage} />}
     </>
   );
 }
