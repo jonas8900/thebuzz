@@ -14,7 +14,7 @@ export default function Terms() {
             </span>
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Nutzungs&shy;bedingungen (AGB)</h1>
             <p className="opacity-80">
-              Stand: <span className="font-medium">[TT.MM.JJJJ]</span>
+              Stand: <span className="font-medium">[16.10.2025]</span>
             </p>
           </div>
         </div>
@@ -33,9 +33,9 @@ export default function Terms() {
                 „Dienst“), bereitgestellt durch:
               </p>
               <p className="mt-2 opacity-90">
-                <strong>[Jonas Nachname / Unternehmensname]</strong><br />
-                [Straße Hausnummer], [PLZ] [Ort], [Land]<br />
-                E-Mail: <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:[kontakt@deinedomain.tld]">[kontakt@deinedomain.tld]</a>
+                <strong>Jonas Maximilian Dally</strong><br />
+                Am Fuhrenkampe 56, 30419, Hannover, Deutschland<br />
+                E-Mail: <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:ankerquiz@gmail.com">ankerquiz@gmail.com</a>
               </p>
               <p className="mt-2 opacity-90">
                 Mit der Nutzung des Dienstes erklärst du dich mit diesen Bedingungen einverstanden.

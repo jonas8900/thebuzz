@@ -29,14 +29,14 @@ export default function Privacy() {
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
               <h2 id="verantwortlicher" className="text-xl font-bold tracking-tight">1. Verantwortlicher</h2>
               <p className="mt-2 opacity-90">
-                <strong>[Jonas Nachname]</strong><br />
-                [Straße Hausnummer]<br />
-                [PLZ] [Ort], [Land]
+                <strong>Jonas Maximilian Dally</strong><br />
+                Am Fuhrenkampe 56<br />
+                30419, Hannover, Deutschland
               </p>
               <p className="mt-2">
                 E-Mail:{" "}
-                <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:[kontakt@deinedomain.tld]">
-                  [kontakt@deinedomain.tld]
+                <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:ankerquiz@gmail.com">
+                  ankerquiz@gmail.com
                 </a>
               </p>
             </div>
@@ -95,7 +95,7 @@ export default function Privacy() {
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
               <h2 id="hosting" className="text-xl font-bold tracking-tight">5. Hosting &amp; Server-Logs (EU)</h2>
               <p className="mt-2 opacity-90">
-                TheBuzz wird bei <strong>[Hosting-Anbieter]</strong> mit Rechenzentrumsstandort(en) in der EU betrieben.
+                TheBuzz wird bei <strong>Heroku</strong> mit Rechenzentrumsstandort(en) in der EU betrieben.
                 Es besteht ein <strong>Auftragsverarbeitungsvertrag (Art. 28 DSGVO)</strong>. Server-Logs (z. B. IP,
                 Zeitstempel, URL, User-Agent) dienen der Betriebssicherheit und werden i. d. R. nach <strong>[7–30]</strong> Tagen
                 gelöscht oder anonymisiert. Soweit möglich, speichern wir IPs gekürzt.
@@ -116,8 +116,8 @@ export default function Privacy() {
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
               <h2 id="registrierung" className="text-xl font-bold tracking-tight">7. Registrierung (Admins)</h2>
               <p className="mt-2 opacity-90">
-                Für Admin-Konten verarbeiten wir E-Mail und Passwort-Hash (argon2/bcrypt; kein Klartext) oder eine
-                OAuth-ID (sofern aktiviert). Löschung auf Wunsch möglich (siehe Rechte).
+                Für Admin-Konten verarbeiten wir E-Mail und Passwort-Hash  oder eine
+                OAuth-ID. Löschung auf Wunsch möglich (siehe Rechte).
               </p>
             </div>
 
@@ -215,7 +215,7 @@ export default function Privacy() {
 
             <div className="text-sm opacity-70">
               Hinweis: Diese Seite ist eine Vorlage und ersetzt keine Rechtsberatung. Bitte ergänze die konkret
-              eingesetzten Anbieter (Hoster, Mail) und deren EU-Standorte sowie AV-Verträge.
+              eingesetzten Anbieter und deren EU-Standorte sowie AV-Verträge.
             </div>
 
             <div className="mt-4">

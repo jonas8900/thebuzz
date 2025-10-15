@@ -29,7 +29,7 @@ export default function Impressum() {
               <p className="mt-2 opacity-90">
                 <strong>Jonas Maximilian Dally</strong><br />
                 <br />
-                [PLZ] [Ort], [Land]
+                Am Fuhrenkampe 56, 30419, Hannover, Deutschland
               </p>
             </div>
 
@@ -38,11 +38,9 @@ export default function Impressum() {
               <h2 className="text-xl font-bold tracking-tight" id="kontakt">2. Kontakt</h2>
               <p className="mt-2">
                 E-Mail:{" "}
-                <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:[kontakt@deinedomain.tld]">
-                  [kontakt@deinedomain.tld]
+                <a className="underline decoration-dotted underline-offset-4 hover:opacity-80" href="mailto:ankerquiz@gmail.com">
+                  ankerquiz@gmail.com
                 </a>
-                <br />
-                Telefon (optional): [+49 …]
               </p>
             </div>
 
@@ -50,36 +48,22 @@ export default function Impressum() {
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
               <h2 className="text-xl font-bold tracking-tight" id="vertretung">3. Vertretungsberechtigt</h2>
               <p className="mt-2 opacity-90">
-                [Name der vertretungsberechtigten Person/en] (bei Einzelunternehmen: identisch mit Anbieter)
-              </p>
-              <h3 className="mt-4 font-semibold">Register &amp; USt-ID (falls vorhanden)</h3>
-              <ul className="mt-2 list-disc pl-5 text-sm opacity-90 space-y-1">
-                <li>Handelsregister: [Registergericht], HRB/HRA: [Nummer]</li>
-                <li>USt-IdNr. gemäß § 27a UStG: [DE…]</li>
-                <li>W-IdNr. (optional): [DE…]</li>
-              </ul>
-            </div>
-
-            {/* Aufsichtsbehörde */}
-            <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="aufsicht">4. Aufsichtsbehörde (falls zutreffend)</h2>
-              <p className="mt-2 opacity-90">
-                [Bezeichnung der zuständigen Aufsichtsbehörde, Anschrift]
+               Jonas Maximilian Dally 
               </p>
             </div>
 
             {/* Verantwortlich i.S.d. MStV */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="verantwortlich">5. Verantwortlich nach § 18 Abs. 2 MStV</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="verantwortlich">4. Verantwortlich nach § 18 Abs. 2 MStV</h2>
               <p className="mt-2 opacity-90">
-                <strong>[Name]</strong><br />
-                [Straße Hausnummer], [PLZ] [Ort], [Land]
+                <strong>Jonas Maximilian Dally</strong><br />
+                Am Fuhrenkampe 56, 30419, Hannover, Deutschland
               </p>
             </div>
 
             {/* EU-Hosting Hinweis */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="hosting">6. EU-weit gehostet</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="hosting">5. EU-weit gehostet</h2>
               <p className="mt-2 opacity-90">
                 TheBuzz wird ausschließlich auf Servern in der Europäischen Union betrieben. Es findet kein
                 Drittlandtransfer personenbezogener Daten außerhalb der EU/EWR statt. Details siehe{" "}
@@ -91,7 +75,7 @@ export default function Impressum() {
 
             {/* Haftung für Inhalte */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="haftung-inhalte">7. Haftung für Inhalte</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="haftung-inhalte">6. Haftung für Inhalte</h2>
               <p className="mt-2 opacity-90">
                 Wir sind gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich.
                 Nach §§ 8 bis 10 TMG sind wir jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu
@@ -104,7 +88,7 @@ export default function Impressum() {
 
             {/* Haftung für Links */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="haftung-links">8. Haftung für Links</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="haftung-links">7. Haftung für Links</h2>
               <p className="mt-2 opacity-90">
                 Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb
                 können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets
@@ -116,7 +100,7 @@ export default function Impressum() {
 
             {/* Urheberrecht */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="urheberrecht">9. Urheberrecht</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="urheberrecht">8. Urheberrecht</h2>
               <p className="mt-2 opacity-90">
                 Die durch uns erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Beiträge Dritter
                 sind als solche gekennzeichnet. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb
@@ -125,17 +109,9 @@ export default function Impressum() {
               </p>
             </div>
 
-            {/* Mediennachweise */}
-            <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="medien">10. Bild-/Mediennachweise</h2>
-              <p className="mt-2 opacity-90">
-                Verwendete Bilder/Grafiken: [Eigene Bilder / Quellenangaben mit Lizenzhinweisen, z. B. Unsplash/Name, Lizenz], sofern zutreffend.
-              </p>
-            </div>
-
             {/* OS-Plattform */}
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="os">11. Online-Streitbeilegung &amp; Verbraucherschlichtung</h2>
+              <h2 className="text-xl font-bold tracking-tight" id="os">9. Online-Streitbeilegung &amp; Verbraucherschlichtung</h2>
               <p className="mt-2 opacity-90">
                 Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
                 <a
@@ -150,14 +126,6 @@ export default function Impressum() {
               </p>
             </div>
 
-            {/* Berufshaftpflicht (optional) */}
-            <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
-              <h2 className="text-xl font-bold tracking-tight" id="versicherung">12. Berufshaftpflicht (falls vorhanden)</h2>
-              <p className="mt-2 opacity-90">
-                Versicherer: [Name, Anschrift]<br />
-                Räumlicher Geltungsbereich: [z. B. EU-weit]
-              </p>
-            </div>
 
             {/* Footer Hinweis */}
             <div className="text-sm opacity-70">
@@ -179,15 +147,12 @@ export default function Impressum() {
                 <li><a className="hover:opacity-80" href="#anbieter">1. Anbieter</a></li>
                 <li><a className="hover:opacity-80" href="#kontakt">2. Kontakt</a></li>
                 <li><a className="hover:opacity-80" href="#vertretung">3. Vertretung/Register</a></li>
-                <li><a className="hover:opacity-80" href="#aufsicht">4. Aufsichtsbehörde</a></li>
-                <li><a className="hover:opacity-80" href="#verantwortlich">5. Verantwortlich i.S.d. MStV</a></li>
-                <li><a className="hover:opacity-80" href="#hosting">6. EU-Hosting</a></li>
-                <li><a className="hover:opacity-80" href="#haftung-inhalte">7. Haftung Inhalte</a></li>
-                <li><a className="hover:opacity-80" href="#haftung-links">8. Haftung Links</a></li>
-                <li><a className="hover:opacity-80" href="#urheberrecht">9. Urheberrecht</a></li>
-                <li><a className="hover:opacity-80" href="#medien">10. Mediennachweise</a></li>
-                <li><a className="hover:opacity-80" href="#os">11. OS/Schlichtung</a></li>
-                <li><a className="hover:opacity-80" href="#versicherung">12. Berufshaftpflicht</a></li>
+                <li><a className="hover:opacity-80" href="#verantwortlich">4. Verantwortlich i.S.d. MStV</a></li>
+                <li><a className="hover:opacity-80" href="#hosting">5. EU-Hosting</a></li>
+                <li><a className="hover:opacity-80" href="#haftung-inhalte">6. Haftung Inhalte</a></li>
+                <li><a className="hover:opacity-80" href="#haftung-links">7. Haftung Links</a></li>
+                <li><a className="hover:opacity-80" href="#urheberrecht">8. Urheberrecht</a></li>
+                <li><a className="hover:opacity-80" href="#os">9. OS/Schlichtung</a></li>
               </ul>
             </div>
           </aside>
