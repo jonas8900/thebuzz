@@ -3,7 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { signOut } from "next-auth/react";
+import GoogleProvider from "next-auth/providers/google"
 import Temporaryuser from "../../../db/models/Temporaryuser";
 
 
@@ -95,7 +95,18 @@ export const authOptions = {
           throw new Error("Fehler beim Erstellen des temporären Benutzers");
         }
       }
-    }),      
+    }), 
+    GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        authorization: {
+            params: {
+              prompt: "consent",
+              access_type: "offline",
+              response_type: "code"
+            }
+          }
+    })     
     
   ],
   pages: {
@@ -109,29 +120,126 @@ export const authOptions = {
     updateAge: 24 * 60 * 60, 
   },
   callbacks: {
-    async signIn({ user, account, profile, email, credentials }) {
-      if (!user) {
-        return false;
+    async signIn({ user, account, profile }) {
+      // Credentials/Gast laufen wie gehabt:
+      if (!account || account.provider === "credentials" || account.provider === "guest") {
+        return !!user;
+      }
+
+      // -------- Google: User in der DB anlegen/aktualisieren --------
+      if (account.provider === "google") {
+        await dbConnect();
+
+        const email = profile?.email?.toLowerCase();
+        if (!email) return false;
+
+        // optional: Nur bestimmte Domains erlauben
+        // if (!email.endsWith("@deinedomain.de")) return false;
+
+        // Username fallback (einfach, kollisions-unanständig – bei Bedarf verbessern)
+        const baseUsername =
+          (profile?.name || email.split("@")[0] || "user")
+            .toLowerCase()
+            .replace(/\s+/g, "_");
+
+        // Hole existierenden User oder lege an
+        let dbUser = await User.findOne({ email });
+        if (!dbUser) {
+          dbUser = await User.create({
+            email,
+            name: profile?.name || "",
+            username: baseUsername,
+            role: "user",                     // Standardrolle für Google
+            image: profile?.picture || null,  // falls dein Schema das Feld hat
+            provider: "google",               // falls vorhanden
+          });
+        } else {
+          // Optionale Aktualisierung von Profilfeldern
+          const update = {};
+          if (!dbUser.name && profile?.name) update.name = profile.name;
+          if (!dbUser.image && profile?.picture) update.image = profile.picture;
+          if (Object.keys(update).length) {
+            await User.updateOne({ _id: dbUser._id }, { $set: update });
+            Object.assign(dbUser, update);
+          }
+        }
+
+        // Hänge DB-Userdaten an `user`, damit `jwt()` sie übernehmen kann
+        user.id = dbUser._id.toString();
+        user.email = dbUser.email;
+        user.name = dbUser.name;
+        user.username = dbUser.username;
+        user.role = dbUser.role;
+        // gameId/guest gibt es hier nicht -> bewusst leer lassen
+
+        return true;
       }
 
       return true;
     },
+
     async redirect({ url, baseUrl }) {
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
-    async jwt({ token, user }) {
+
+    async jwt({ token, user, account, profile }) {
+      // Wenn wir gerade eingeloggt haben, `user` enthält frische Daten:
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.role = user.role;
         token.name = user.name;
         token.username = user.username;
-        token.gameId = user.gameId;
+        token.gameId = user.gameId; 
+
+        if (account?.provider === "google") {
+          token.provider = "google";
+          token.accessToken = account.access_token;
+          token.idToken = account.id_token;
+          if (account.refresh_token) token.refreshToken = account.refresh_token;
+          token.accessTokenExpires = account.expires_at
+            ? account.expires_at * 1000
+            : Date.now() + 60 * 60 * 1000; 
+        }
       }
+
+
+      if (token.provider === "google" && token.accessTokenExpires && Date.now() > token.accessTokenExpires && token.refreshToken) {
+        try {
+          const params = new URLSearchParams({
+            client_id: process.env.GOOGLE_CLIENT_ID,
+            client_secret: process.env.GOOGLE_CLIENT_SECRET,
+            grant_type: "refresh_token",
+            refresh_token: String(token.refreshToken),
+          });
+
+          const res = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params.toString(),
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Failed to refresh token");
+
+          token.accessToken = data.access_token;
+          token.accessTokenExpires = Date.now() + data.expires_in * 1000;
+  
+        } catch (e) {
+
+          delete token.accessToken;
+          delete token.accessTokenExpires;
+          delete token.refreshToken;
+        }
+      }
+
       return token;
     },
+
     async session({ session, token }) {
+      session.user = session.user || {};
+
       session.user.id = token.id;
       session.user.email = token.email;
       session.user.role = token.role;
@@ -143,6 +251,41 @@ export const authOptions = {
       return session;
     },
   },
+
+  //   async signIn({ user, account, profile, email, credentials }) {
+  //     if (!user) {
+  //       return false;
+  //     }
+
+  //     return true;
+  //   },
+  //   async redirect({ url, baseUrl }) {
+  //     if (url.startsWith(baseUrl)) return url;
+  //     return baseUrl;
+  //   },
+  //   async jwt({ token, user }) {
+  //     if (user) {
+  //       token.id = user.id;
+  //       token.email = user.email;
+  //       token.role = user.role;
+  //       token.name = user.name;
+  //       token.username = user.username;
+  //       token.gameId = user.gameId;
+  //     }
+  //     return token;
+  //   },
+  //   async session({ session, token }) {
+  //     session.user.id = token.id;
+  //     session.user.email = token.email;
+  //     session.user.role = token.role;
+  //     session.user.username = token.username;
+  //     session.user.name = token.name;
+  //     session.user.gameId = token.gameId;
+  //     session.user.isGuest = token.role === "guest";
+
+  //     return session;
+  //   },
+  // },
   secret: process.env.NEXTAUTH_SECRET,
   jwt: {
     secret: process.env.JWT_SECRET,

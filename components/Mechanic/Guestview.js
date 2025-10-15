@@ -138,32 +138,32 @@ console.log(players)
             <AnimatePresence mode="wait">
 
             <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950'>
-            {isQuestionReady && (
-              <>
-               <div className="absolute left-10 top-10 w-1/4 bg-gray-800 p-4 rounded-xl">
-              <h2 className="text-xl font-semibold mb-4">Aktuelle Punkte</h2>
-              {players.length > 0 && (
-                <ul>
-                  {players.map((player) => (
-                    <>
-                      {player.hasOwnProperty('points') && (
-                        <li key={player.username} className="text-lg text-gray-300">
-                          {player.username}: {player.points} P
-                          {currentQuestion?.playeranswers.find(
-                            (answer) => answer.playerId === player.playerId
-                          ) && (
-                            <span className="text-green-400 ml-2">✔️</span>
-                          )}
-                        </li>
-                      )}
-                    </>
-                  ))}
-                </ul>
-              )}
+              {isQuestionReady && (
+                <>
+                <div className="absolute left-10 top-10 bg-gray-800 p-4 rounded-xl">
+                <h2 className="text-xl font-semibold mb-4">Aktuelle Punkte</h2>
+                {players.length > 0 && (
+                  <ul>
+                    {players.map((player) => (
+                      <>
+                        {player.hasOwnProperty('points') && (
+                          <li key={player.username} className="text-lg text-gray-300">
+                            {player.username}: {player.points} P
+                            {currentQuestion?.playeranswers.find(
+                              (answer) => answer.playerId === player.playerId
+                            ) && (
+                              <span className="text-green-400 ml-2">✔️</span>
+                            )}
+                          </li>
+                        )}
+                      </>
+                    ))}
+                  </ul>
+                )}
             </div>
               
               <motion.div
-                className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white p-10 rounded-3xl border border-gray-700 shadow-2xl"
+                className="relative w-full flex flex-col justify-center max-w-4xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white lg:p-10 md:p-6 sm:p-4 p-2 rounded-3xl border border-gray-700 shadow-2xl"
                 key={currentQuestionIndex} 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }} 
@@ -181,7 +181,7 @@ console.log(players)
                     </h2>
                   </div>
 
-                  <h3 className="text-3xl md:text-4xl font-bold mb-10 text-center leading-snug drop-shadow">
+                  <h3 className="lg:text-4xl md:text-2xl sm:text-xl font-bold mb-10 text-center leading-snug drop-shadow">
                     {currentQuestion.question}
                   </h3>
 

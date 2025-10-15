@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/router";
 import ErrorMessage from "../Toast/ErrorMessage";
 import SuccessMessage from "../Toast/SuccessMessage";
+import { signIn } from "next-auth/react";
 
 export default function LoginScreen({ handleSubmit }) {
   const [typeSwitch, setTypeSwitch] = useState("password");
@@ -127,19 +128,25 @@ export default function LoginScreen({ handleSubmit }) {
 
 
   return (
-    <div className="relative flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
-      <div className=" bg-[url(/images/images.webp)] bg-contain bg-center bg-no-repeat bg-gray-50 h-screen w-full flex items-center justify-center box-shadow-lg dark:bg-gray-900">
-        <div className="flex bg-white rounded-lg shadow-lg overflow-hidden mx-auto w-full max-w-4xl dark:border-gray-700 dark:bg-gray-800">
+    <div className="relative flex flex-col items-center justify-center min-h-screen
+                  bg-gradient-to-br from-violet-100 via-fuchsia-50 to-sky-50
+                  dark:from-[#0b0b13] dark:via-[#11142a] dark:to-[#1b0f2e]">
+    <div className="bg-transparent bg-contain bg-center bg-no-repeat h-screen w-full flex items-center justify-center">
+      <div className="flex bg-white rounded-lg shadow-lg overflow-hidden mx-auto w-full max-w-4xl dark:border-gray-700 dark:bg-gray-800">
           <div
-            className="hidden lg:block lg:w-1/2 bg-cover"
-            style={{ backgroundImage: "url(/images/derLord.webp)" }}></div>
+            className="hidden lg:block lg:w-1/2 bg-center bg-no-repeat bg-contain min-h-[420px]"
+            style={{ backgroundImage: "url(/images/quizTime.jpg)" }}
+          ></div>
+
           <div className="w-full p-8 lg:w-1/2">
             <h2 className="text-2xl font-semibold text-gray-700 text-center dark:text-white">
-              Nobus Ankerquiz
+              TheBuzz Quiz
             </h2>
-            <a
-              href="#"
-              className="flex items-center justify-center mt-4 text-white rounded-lg shadow-md hover:bg-gray-200 transition-all duration-200 dark:bg-white dark:hover:bg-gray-300">
+              <button
+                type="button"
+                onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+                className="flex items-center w-full cursor-pointer justify-center mt-4 text-white rounded-lg shadow-md hover:bg-gray-200 transition-all duration-200 dark:bg-white dark:hover:bg-gray-300"
+              >
               <div className="px-0 py-3">
                 {/* googleIcon for Login with Google */}
                 <svg className="h-6 w-6" viewBox="0 0 40 40">
@@ -164,7 +171,7 @@ export default function LoginScreen({ handleSubmit }) {
               <h1 class="px-6 py-3 w-5/6 text-center text-gray-600 font-bold  ">
                 Melde dich mit Google an
               </h1>
-            </a>
+            </button>
             <div class="mt-4 flex items-center justify-between">
               <span class="border-b w-1/5 lg:w-1/4"></span>
               <a
