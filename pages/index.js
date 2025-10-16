@@ -81,8 +81,7 @@ export default function Home() {
             />
 
             <div className="flex flex-col items-center justify-center h-screen">
-              <h1 className="text-4xl font-bold mb-4">Spiel Joinen</h1>
-              <p className="text-lg mb-8 opacity-80">Verwalte deine Spiele</p>
+              <h1 className="text-4xl font-bold mb-4">Spiel Verwalten</h1>
               <div className="flex space-x-4">
                 <button
                   className="px-4 py-2 bg-blue-600 text-white cursor-pointer rounded hover:bg-blue-700 active:bg-blue-900 transition"
