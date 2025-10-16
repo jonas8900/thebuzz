@@ -117,7 +117,7 @@ export default function InfoLanding() {
                                 Anmelden
                             </Link>
                             <Link
-                                href="/auth/register"
+                                href="/auth/login"
                                 onClick={() => setOpenNavbar(false)}
                                 className="rounded-lg border border-blue-600 px-3 py-2 text-center font-semibold text-blue-700 hover:bg-blue-50 dark:hover:bg-white/10"
                             >
@@ -242,7 +242,7 @@ export default function InfoLanding() {
 
                  <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
                     <Link
-                    href="/auth/register"
+                    href="/auth/login"
                     className="rounded-lg bg-blue-600 px-5 py-2.5 font-semibold text-white hover:bg-blue-700 active:bg-blue-900"
                     >
                     Kostenlos starten
