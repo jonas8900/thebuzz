@@ -34,7 +34,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
         { title: 'Spiel', subItems: ['Starten', 'Statistik', 'Erstellen', 'Einstellungen'] },
     ];
 
-
+    let counter = 0;
     const chosenGame = gameData?.chosenGame || null;
 
     useEffect(() => {
@@ -87,7 +87,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
         }
       
         setShowSuccess(true);
-        setToastMessage("Spiel gewechselt, Ma boy! 🎉");
+        setToastMessage("Spiel gewechselt! 🎉");
         mutate("/api/game/getChosenGame");
         setTimeout(() => {
           setShowSuccess(false);
@@ -99,6 +99,7 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
         <AnimatePresence>
             {panelOpen & dynamicData === "admin" && (
                   <motion.div 
+                    key="panel-admin"
                     className="absolute top-1/2 left-1/2 lg:w-1/2 lg:h-3/4 w-full h-full flex border bg-gray-100 rounded-2xl shadow-xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden dark:bg-gray-900"
                     initial={{ opacity: 0, scale: 0.8, x: -300}}
                     animate={{ opacity: 1, scale: 1  , x: 0 }}
@@ -117,8 +118,8 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
   
                   <div className={`fixed inset-0 bg-gray-800 bg-opacity-50 z-40 transition-all duration-300 ${isMenuOpen ? 'block' : 'hidden'} lg:block lg:relative lg:bg-transparent lg:bg-opacity-100`}>
                       <div className="w-3/4  lg:w-full h-full bg-gray-100 p-8 pt-12 flex flex-col border-r border-gray-300 dark:bg-gray-900 ">
-                          {menuItems.map((item) => (
-                              <div key={item.title} className="mb-5">
+                          {menuItems.map((item, index) => (
+                              <div key={index} className="mb-5">
                                   <h2 className="font-bold mb-2 text-gray-900 dark:text-white">{item.title}</h2>
                                   <div className="flex flex-col space-y-1">
                                       {item.subItems.map((subItem) => (
@@ -148,11 +149,14 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
                                     className="p-2 mt-2 border w-full rounded bg-gray-50 dark:bg-gray-800 text-black dark:text-white "
                                     onChange={(e) => handleChangeGame(e.target.value)}  
                                     >
-                                        {data.map((game) => (
+                                        {data.map((game) => {
+                                           
+                                            return (
                                             <option key={game._id} value={game._id} className="p-2">
-                                            {game.name}
+                                                {game.name}
                                             </option>
-                                        ))}
+                                            )
+                                        })}
                                 </select>
                               )}
                             
@@ -182,10 +186,12 @@ export default function Panel({panelOpen, dynamicData, setPanelOpen, setCreateGa
 
             )}
             {panelOpen & dynamicData === 'statistic' && (
-                <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                <motion.div 
+                    key="panel-statistic"
+                    className="flex flex-col items-center justify-center w-full h-full p-4">
                     <h1 className="text-2xl font-bold">Statistic Panel</h1>
                     <p className="mt-2 text-gray-600">Manage your application settings here.</p>
-                </div>
+                </motion.div>
             )}
                 
             {showError && <ErrorMessage message={toastMessage} />}

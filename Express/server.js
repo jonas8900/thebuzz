@@ -107,7 +107,7 @@ nextApp
           const hashedIp = hashIp(clientIp);
 
           if (game.blockedips.includes(hashedIp)) {
-            console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
+            console.log(`Verbindung von blockierter IP wurde abgelehnt.`);
             socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
             await emitGameUpdate(io, gameId);
             return;
@@ -183,8 +183,6 @@ nextApp
         const clientIp = getClientIp(socket);
 
         const hashedIp = hashIp(clientIp);
-        console.log("Client IP:", clientIp);
-        console.log("Gehashte IP:", hashedIp);
 
         const game = await Game.findById(gameId).select("blockedips");
         if (!game) {
@@ -196,7 +194,7 @@ nextApp
 
 
         if (game.blockedips.includes(hashedIp)) {
-          console.log(`Verbindung von blockierter IP ${clientIp} wurde abgelehnt.`);
+          console.log(`Verbindung von blockierter IP wurde abgelehnt.`);
           socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
           return;
         }

@@ -69,7 +69,7 @@ export default function GameStatistic() {
 
 
   return (
-    <div className="relative bg-gray-900 text-white py-12 px-6">
+    <div className="relative dark:bg-gray-900 dark:text-white py-12 px-6">
       {/* Tribüne Header */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -85,7 +85,7 @@ export default function GameStatistic() {
         <select
           value={selectedScoreIndex}
           onChange={handleScoreChange}
-          className="bg-gray-700 text-white p-2 rounded"
+          className="dark:bg-gray-700 dark:text-white p-2 rounded"
         >
           {game && game.scores?.map((score, index) => (
             <option key={index} value={index}>
@@ -108,15 +108,13 @@ export default function GameStatistic() {
                 .sort((a, b) => b.points - a.points) 
                 .map((score, index) => {
 
-                    console.log(score.player.username);
-
                     const isFirstPlace = index === 0;
 
 
                     return (
                         <motion.div
                         key={score.player._id}
-                        className={`bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`} // Vergrößern für den ersten Platz
+                        className={`dark:bg-gray-800 p-6 rounded-lg shadow-lg ${isFirstPlace ? 'scale-110' : ''}`} // Vergrößern für den ersten Platz
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.5, delay: index * 0.1 }}

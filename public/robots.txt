@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.thebuzz-quiz.de
+
+# Sitemaps
+Sitemap: https://www.thebuzz-quiz.de/sitemap.xml
