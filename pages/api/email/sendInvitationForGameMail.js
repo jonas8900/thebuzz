@@ -38,7 +38,7 @@ export default async function handler(req, res) {
   }
 
   const emailRegex = normalizeEmail(email);
-  if (!emailRegex.test(email)) {
+  if (!emailRegex) {
     return res.status(400).json({ error: "Ungültige E-Mail-Adresse." });
   }
 
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
                         <a href="${inviteLink}" style="color: #007bff; text-decoration: none;">${inviteLink}</a>
                     </p>
                     <footer style="margin-top: 40px; text-align: center; font-size: 12px; color: #888888;">
-                        <p>© 2025 Dein Spiel</p>
+                        <p>© 2025 Thebuzz</p>
                     </footer>
                     </div>
                 </body>
