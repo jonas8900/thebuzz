@@ -11,9 +11,9 @@ function toneByDelta(delta) {
 export default function StatBadge({
   kpi,
   label,
-  sublabel,          // z.B. "in den letzten 7 Tagen"
-  delta,             // optional: +/- Zahl für Trend
-  icon = "📊",       // Emoji oder JSX
+  sublabel,          
+  delta,             
+  icon = "📊",       
   loading = false,
   className = "",
 }) {
@@ -34,7 +34,7 @@ export default function StatBadge({
 
       {/* Icon */}
       <div className="h-7 flex items-center justify-center">
-        {typeof icon === "string" ? <span className="text-lg">{icon}</span> : icon}
+        {typeof icon === "string" ? <span className="text-3xl">{icon}</span> : icon}
       </div>
 
       {/* KPI */}

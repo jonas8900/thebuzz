@@ -17,6 +17,10 @@ function App({ Component, pageProps }) {
             <SWRConfig value={{ fetcher }}>
                 <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
                     <PlayerSocketProvider>
+                        <Head>
+                            <title>TheBuzz – Quiz</title>
+                            <meta name="description" content="Starte spannende Buzzer-Runden und verwalte Fragen im Adminpanel." />
+                        </Head>
                         <Component {...pageProps} />
                     </PlayerSocketProvider>
                 </ThemeProvider>

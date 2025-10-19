@@ -6,6 +6,7 @@ import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
 import Link from "next/link";
 import InfoLanding from "@/components/marketing/landing";
+import Head from "next/head";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -29,6 +30,7 @@ export default function Home() {
 
   return (
     <>
+
     {isAuthorized ? (
         <motion.main
           className="bg-gradient-to-br from-violet-100 via-fuchsia-50 to-sky-50 bg-contain bg-center bg-no-repeat h-screen w-full flex flex-col justify-center items-center relative overflow-hidden dark:from-[#0b0b13] dark:via-[#11142a] dark:to-[#1b0f2e]"
@@ -36,16 +38,6 @@ export default function Home() {
           animate="visible"
           variants={fadeIn}
         >
-          {/* Buy me a coffee auch hier verfügbar */}
-          <a
-            href="https://ko-fi.com/rhaigo"
-            target="_blank"
-            rel="noreferrer"
-            className="fixed top-4 right-4 z-50 rounded-lg bg-yellow-400/90 px-3 py-1.5 text-sm font-semibold text-black shadow hover:bg-yellow-400 transition"
-            aria-label="Buy me a coffee"
-          >
-            ☕ Buy me a coffee
-          </a>
 
           <motion.div initial="hidden" animate="visible" variants={fadeIn}>
             <Navigation

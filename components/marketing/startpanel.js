@@ -2,6 +2,11 @@
 import useSWR from "swr";
 import { motion } from "framer-motion";
 import StatBadge from "./startbadge";
+import { MdOutlineAdminPanelSettings } from "react-icons/md";
+import { HiOutlineUserGroup } from "react-icons/hi";
+import { BsQuestionLg } from "react-icons/bs";
+import { IoGameControllerOutline } from "react-icons/io5";
+import { FaFlagCheckered } from "react-icons/fa";
 
 export default function StatsPanel() {
   const { data, error, isLoading } = useSWR("/api/stats");
@@ -43,35 +48,35 @@ export default function StatsPanel() {
             label: "angemeldete Admins",
             delta: last7d?.admins ?? 0,
             sublabel: "in den letzten 7 Tagen",
-            icon: "🛠️",
+            icon: <MdOutlineAdminPanelSettings className="text-4xl"/>,
           },
           {
             kpi: totals.tempUsers,
             label: "Teilnehmer (Mitspieler)",
             delta: last7d?.tempUsers ?? 0,
             sublabel: "neu beigetreten",
-            icon: "👥",
+            icon: <HiOutlineUserGroup className="text-4xl" />,
           },
           {
             kpi: totals.tasks,
             label: "gespeicherte Fragen/Aufgaben",
             delta: last7d?.tasks ?? 0,
             sublabel: "neu erstellt",
-            icon: "❓",
+            icon: <BsQuestionLg className="text-4xl"/>,
           },
           {
             kpi: totals.games,
             label: "angelegte Spiele",
             delta: last7d?.games ?? 0,
             sublabel: "neu angelegt",
-            icon: "🎮",
+            icon: <IoGameControllerOutline className="text-4xl"/>,
           },
           {
             kpi: totals.playedGames,
             label: "fertig gespielte Spiele",
             delta: undefined, 
             sublabel: "gesamt",
-            icon: "🏁",
+            icon: <FaFlagCheckered className="text-4xl" />,
           },
         ]).map((item, i) => (
           <motion.div
