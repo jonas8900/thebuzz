@@ -2,7 +2,7 @@
 
 **thebuzz** ist eine schlanke, latenzarme Spiele-App: Host startet eine Runde, Spieler*innen treten per Link/QR bei und bei einer Buzzerfrage gilt z.B. **der erste Klick zählt** — inkl. Sperre für alle Nachfolgenden, Reset durch den Host und klarer Anzeige, wer gewonnen hat. Es gibt verschiedene Fragekategorien wie Bilderfragen, Multiple Choice, Offene Frage und Wahr oder Falsch.
 
-> Live-Demo: https://thebuzz-cfde756a15ca.herokuapp.com
+> Live-Demo: https://thebuzz-quiz.de
 
 ---
 

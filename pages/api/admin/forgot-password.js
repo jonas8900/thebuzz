@@ -40,9 +40,7 @@ export default async function handler(req, res) {
         "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
     });
   }
-
   
-
   try {
     const user = await User.findOne({ email }).select("_id provider");
     if (user && user.provider === "credentials") {
