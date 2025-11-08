@@ -165,6 +165,7 @@ export default function GamePanel() {
 
   if(!game) return null;
 
+  console.log(players);
   return (
     <>
 
@@ -180,10 +181,9 @@ export default function GamePanel() {
           </motion.div>
         )}
      {(session.user.isGuest || (session.user.id !== game?.admin?._id && !session.user.isGuest)) &&  (
-     <div className="absolute top-1/2 left-1/2 lg:w-3/4 lg:h-3/4 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
+     <div className="absolute top-1/2 left-1/2 lg:w-7/8 lg:h-9/10 w-full h-full flex flex-col justify-center items-center border bg-gray-900 rounded-2xl shadow-2xl transform -translate-x-1/2 -translate-y-1/2 overflow-hidden text-white">
         <>
               <GuestView 
-                players={players}
                 socket={socket}
                 session={session}
                 showrightAnswer={showrightAnswer}

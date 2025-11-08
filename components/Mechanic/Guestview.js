@@ -10,11 +10,11 @@ import { FaCrown } from "react-icons/fa";
 
 
 
-export default function GuestView({ players, session, showrightAnswer }) {
+export default function GuestView({  session, showrightAnswer }) {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answerInput, setAnswerInput] = useState("");
     const [hasBuzzed, setHasBuzzed] = useState(false);
-    const { socket } = usePlayerSocket();
+    const {socket, players} = usePlayerSocket();
     const [gameByID, setGameByID] = useState(null);
     const [showAnswer, setShowAnswer] = useState(false);
 
@@ -29,7 +29,6 @@ export default function GuestView({ players, session, showrightAnswer }) {
         socket.off("gameUpdated");
       };
     }, [socket]);
-    
 
     const currentQuestion = gameByID?.questions[gameByID?.currentQuestionIndex];
     const currentQuestionIndex = gameByID?.currentQuestionIndex;
@@ -62,13 +61,13 @@ export default function GuestView({ players, session, showrightAnswer }) {
       socket.on("banned", ({ message }) => {
         console.log(message);
         router.push("/banned");
+        return () => {
+          window.location.reload();
+          socket.off("banned");
+        }
       });
      
-    
-      return () => {
-        window.location.reload();
-        socket.off("banned");
-      };
+   
     }, [ socket, router ]);
 
     useEffect(() => {
@@ -126,8 +125,8 @@ export default function GuestView({ players, session, showrightAnswer }) {
         setSelectedAnswer(null);
       }
     }
-console.log(players)
 
+    console.log(gameByID)
     return (
       <>
       {!gameByID?.finished ? (
@@ -144,11 +143,13 @@ console.log(players)
                 <h2 className="text-xl font-semibold mb-4">Aktuelle Punkte</h2>
                 {players.length > 0 && (
                   <ul>
-                    {players.map((player) => (
+                    {gameByID.players.map((player) => {
+                      console.log(player)
+                      return (           
                       <>
-                        {player.hasOwnProperty('points') && (
+                        {player?.playerId?.hasOwnProperty('points') && (
                           <li key={player.username} className="text-lg text-gray-300">
-                            {player.username}: {player.points} P
+                            {player.username}: {player?.playerId?.points} P
                             {currentQuestion?.playeranswers.find(
                               (answer) => answer.playerId === player.playerId
                             ) && (
@@ -157,7 +158,8 @@ console.log(players)
                           </li>
                         )}
                       </>
-                    ))}
+                      )
+                      })}
                   </ul>
                 )}
             </div>
