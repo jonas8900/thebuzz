@@ -136,7 +136,7 @@ export default function GuestView({  session, showrightAnswer }) {
           
             <AnimatePresence mode="wait">
 
-            <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950'>
+            <div className='w-full h-full flex items-center justify-center p-6 bg-gray-950 overflow-auto'>
               {isQuestionReady && (
                 <>
                 <div className="absolute left-10 top-10 bg-gray-800 p-4 rounded-xl">

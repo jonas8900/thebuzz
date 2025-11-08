@@ -255,15 +255,7 @@ export default function GamePanel() {
       </>
       )}
       )}
-      {/* <div className="absolute bottom-0 left-0 w-full flex justify-center gap-20 px-4 z-50">
-        {game?.players.map((player) => (
-          <div
-            key={`bar-${player.username}`}
-            className="w-1/5 min-w-[100px] h-55 flex items-center justify-center border bg-gray-900 rounded-2xl shadow-2xl text-white"
-          >
-          </div>
-        ))}
-      </div> */}
+
       </>
 
 
