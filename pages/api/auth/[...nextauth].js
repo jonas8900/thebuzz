@@ -242,40 +242,6 @@ export const authOptions = {
     },
   },
 
-  //   async signIn({ user, account, profile, email, credentials }) {
-  //     if (!user) {
-  //       return false;
-  //     }
-
-  //     return true;
-  //   },
-  //   async redirect({ url, baseUrl }) {
-  //     if (url.startsWith(baseUrl)) return url;
-  //     return baseUrl;
-  //   },
-  //   async jwt({ token, user }) {
-  //     if (user) {
-  //       token.id = user.id;
-  //       token.email = user.email;
-  //       token.role = user.role;
-  //       token.name = user.name;
-  //       token.username = user.username;
-  //       token.gameId = user.gameId;
-  //     }
-  //     return token;
-  //   },
-  //   async session({ session, token }) {
-  //     session.user.id = token.id;
-  //     session.user.email = token.email;
-  //     session.user.role = token.role;
-  //     session.user.username = token.username;
-  //     session.user.name = token.name;
-  //     session.user.gameId = token.gameId;
-  //     session.user.isGuest = token.role === "guest";
-
-  //     return session;
-  //   },
-  // },
   secret: process.env.NEXTAUTH_SECRET,
   jwt: {
     secret: process.env.JWT_SECRET,
