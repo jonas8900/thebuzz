@@ -188,7 +188,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
             <div className="mt-4 flex items-center justify-between">
               <span className="border-b w-1/5 lg:w-1/4"></span>
               <span className="text-xs text-center text-gray-500 uppercase dark:text-white">
-                or login with Email
+                oder mit E-Mail anmelden
               </span>
               <span className="border-b w-1/5 lg:w-1/4"></span>
             </div>
@@ -198,7 +198,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                   htmlFor="login-email"
                   className="block text-gray-700 text-sm font-bold mb-2 dark:text-white"
                 >
-                  Email Address
+                  E-Mail-Adresse
                 </label>
                 <input
                   id="login-email"
@@ -214,14 +214,14 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                     className="block text-gray-700 text-sm font-bold mb-2 dark:text-white"
                     htmlFor="login-password"
                   >
-                    Password
+                    Passwort
                   </label>
                   <button
                     type="button"
                     className="cursor-pointer text-xs text-purple-500 hover:text-gray-600 transition-all duration-200 dark:hover:text-white"
                     onClick={() => setForgotPassword(true)}
                   >
-                    Forget Password?
+                    Passwort vergessen?
                   </button>
                 </div>
                 <span className="relative flex items-center">
@@ -246,7 +246,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                   className="cursor-pointer bg-purple-700 text-white font-bold py-2 px-4 w-full rounded hover:bg-purple-500 transition-all duration-200"
                   disabled={loadingSubmit}
                 >
-                  {loadingSubmit ? "Lade.." : "Login"}
+                  {loadingSubmit ? "Lade..." : "Anmelden"}
                 </button>
               </div>
             </form>
@@ -257,7 +257,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                 className="cursor-pointer text-xs text-purple-500 uppercase hover:text-gray-600 transition-all duration-200 dark:hover:text-white"
                 onClick={() => setRegistered(true)}
               >
-                or sign up
+                oder registrieren
               </button>
               <span className="border-b w-1/5 md:w-1/4"></span>
             </div>
@@ -303,7 +303,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                           htmlFor="forgot-email"
                           className="block text-sm font-bold ml-1 mb-2 dark:text-white"
                         >
-                          Email address
+                          E-Mail-Adresse
                         </label>
                         <div className="relative">
                           <input
@@ -369,7 +369,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                           htmlFor="username"
                           className="block text-sm font-bold ml-1 mb-2 dark:text-white"
                         >
-                          Username
+                          Benutzername
                         </label>
                         <div className="relative">
                           <input
@@ -403,7 +403,7 @@ export default function LoginScreen({ handleSubmit, loadingSubmit }) {
                           htmlFor="register-email"
                           className="block text-sm font-bold ml-1 mb-2 dark:text-white"
                         >
-                          Email address
+                          E-Mail-Adresse
                         </label>
                         <div className="relative">
                           <input
