@@ -10,7 +10,7 @@ const PlayerSocketContext = createContext();
  * Uses autoConnect: false so public marketing pages do not open idle WebSocket connections.
  * Connects to the current origin automatically 
  */
-export const socket = io(process.env.NEXT_PUBLIC_SERVER_URL || undefined, {
+export const socket = io({
   path: "/socket.io",
   autoConnect: false,
 });

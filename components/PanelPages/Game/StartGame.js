@@ -68,7 +68,14 @@ export default function StartGame() {
   function handleRouting() {
     const authString = generateRandomString();
     const xdle = generateRandomString();
-    const url = `${data.chosenGame.invitelink}&auth=${authString}&xdle=${xdle}`;
+    let inviteUrl = data.chosenGame.invitelink;
+    try {
+      const parsed = new URL(inviteUrl, window.location.origin);
+      inviteUrl = `${window.location.origin}${parsed.pathname}${parsed.search}`;
+    } catch {
+      // Fallback to raw invitelink if URL parsing fails
+    }
+    const url = `${inviteUrl}&auth=${authString}&xdle=${xdle}`;
     window.open(url, "_blank");
   }
 

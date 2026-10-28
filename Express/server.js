@@ -146,11 +146,25 @@ nextApp
     const httpServer = http.createServer(server);
     const io = new Server(httpServer, {
       cors: {
-        origin: process.env.NEXT_PUBLIC_SERVER_URL || true,
+        origin: true,
+        credentials: true,
         methods: ["GET", "POST"],
       },
       path: "/socket.io",
     });
+
+    // Prevent Next.js 15's lazy custom-server upgrade handler from intercepting Socket.IO WebSocket upgrades
+    const origOn = httpServer.on.bind(httpServer);
+    httpServer.on = function (event, listener) {
+      if (event === "upgrade") {
+        return origOn(event, (req, socket, head) => {
+          if (req.url && req.url.startsWith("/socket.io")) return;
+          return listener(req, socket, head);
+        });
+      }
+      return origOn(event, listener);
+    };
+    httpServer.addListener = httpServer.on;
 
     server.use(cors());
 
@@ -668,6 +682,7 @@ nextApp
     });
 
     server.all("*", (req, res) => {
+      if (req.url && req.url.startsWith("/socket.io")) return;
       return handle(req, res);
     });
 

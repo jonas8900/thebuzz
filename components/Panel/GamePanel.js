@@ -107,12 +107,28 @@ export default function GamePanel() {
     const username = session.user.username;
     const adminId = String(gameByID?.admin?._id || gameByID?.admin || "");
 
-    if (!session.user.isGuest && String(playerId) === adminId) {
-      socket.emit("watchGame", { gameId: queryId });
-    } else {
-      socket.emit("joinGame", { gameId: queryId, playerId, username });
+    function joinRoom() {
+      if (!session.user.isGuest && String(playerId) === adminId) {
+        socket.emit("watchGame", { gameId: queryId });
+      } else {
+        socket.emit("joinGame", { gameId: queryId, playerId, username });
+      }
     }
+
+    joinRoom();
+    socket.on("connect", joinRoom);
+
+    return () => {
+      socket.off("connect", joinRoom);
+    };
   }, [gameByID, session, socket, queryId]);
+
+  // Seed game state from initial SWR fetch so the view never hangs if WebSocket upgrade is delayed
+  useEffect(() => {
+    if (gameByID && !game) {
+      setGame(gameByID);
+    }
+  }, [gameByID, game]);
 
   // Subscribe to real-time game state updates
   useEffect(() => {
@@ -123,11 +139,17 @@ export default function GamePanel() {
       setGame(updatedGame);
     }
 
+    function requestGameUpdate() {
+      socket.emit("getUpdatedGame", { gameId });
+    }
+
     socket.on("gameUpdated", handleGameUpdate);
-    socket.emit("getUpdatedGame", { gameId });
+    socket.on("connect", requestGameUpdate);
+    requestGameUpdate();
 
     return () => {
       socket.off("gameUpdated", handleGameUpdate);
+      socket.off("connect", requestGameUpdate);
     };
   }, [socket, gameByID]);
 

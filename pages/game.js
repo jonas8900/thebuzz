@@ -23,10 +23,12 @@ export default function Game() {
   );
 
   useEffect(() => {
-    if (session && session.user.gameId !== queryId && session.user.isGuest) {
+    if (!session) return;
+    const isAdminLaunchUrl = Boolean(query.auth && query.xdle);
+    if (session.user.isGuest && (session.user.gameId !== queryId || isAdminLaunchUrl)) {
       signOut({ redirect: false });
     }
-  }, [session, queryId]);
+  }, [session, queryId, query.auth, query.xdle]);
 
   if (isLoading || !isReady) return <Loading />;
 
