@@ -2,12 +2,6 @@
 
 **TheBuzz** ist ein webbasiertes Multiplayer-Quiz für Spieleabende, Streams, Hochzeiten und Teamevents. Ein Host (Admin) erstellt eigene Quizrunden mit verschiedenen Fragetypen und teilt einen Einladungslink. Alle Mitspieler treten direkt im Browser über ihr Smartphone oder den Desktop bei, ohne sich vorher registrieren zu müssen.
 
-## Warum ich das Projekt gebaut habe
-
-Viele bestehende Quiz-Tools scheitern bei privaten Runden oder kleineren Events an zwei Dingen: Entweder müssen sich alle Mitspieler erst umständlich ein Konto anlegen, oder es fehlt ein echter Buzzer, bei dem Millisekunden entscheiden.
-
-Mit **TheBuzz** wollte ich eine schlanke Lösung bauen, die der Spielleiter komplett in der Hand hat (Fragen freischalten, Buzzer sperren/freigeben, Punkte bei offenen Schätz- oder Bilderfragen manuell vergeben) und bei der Mitspieler in ein paar Sekunden per Link im Spiel sind.
-
 ## Architektur & Technische Umsetzung
 
 ### 1. Custom Node.js Server (Next.js + Express + Socket.IO)
