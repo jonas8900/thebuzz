@@ -6,6 +6,7 @@ import ErrorMessage from "../../Toast/ErrorMessage";
 import SuccessMessage from "../../Toast/SuccessMessage";
 import Image from "next/image";
 import imageCompression from "browser-image-compression";
+import ShowQuestions from "./ShowQuestion";
 
 function FloatingAnswerInput({ value, onChange }) {
   return (
@@ -524,10 +525,13 @@ export default function AddQuestions() {
               </>
             )}
 
-            <button type="submit" className="bg-blue-500 text-white p-2 mb-8 rounded">
+            <button type="submit" className="bg-blue-500 cursor-pointer text-white p-2 mb-8 rounded">
               Frage hinzufügen
             </button>
           </form>
+
+          <hr className="my-4 border-gray-300 dark:border-gray-700" />
+          <ShowQuestions />
         </div>
       ) : (
         <div className="flex flex-col w-full h-full bg-gray-100 dark:bg-gray-900 p-4 rounded-lg">

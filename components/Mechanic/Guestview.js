@@ -107,6 +107,7 @@ export default function GuestView({ session, showrightAnswer }) {
       playerId: session?.user.id,
       username: session?.user.username,
       answer: true,
+      isBuzzer: true,
     };
     socket.emit("submitAnswer", {
       gameId: gameByID._id,

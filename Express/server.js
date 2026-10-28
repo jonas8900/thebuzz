@@ -369,14 +369,6 @@ nextApp
           }
           const roomKey = String(gameId);
 
-          // Fast in-memory lock check for buzzer answers to prevent race conditions under load
-          if (answer.answer === true) {
-            if (buzzerLocks[roomKey] && buzzerLocks[roomKey] !== String(playerId)) {
-              return;
-            }
-            buzzerLocks[roomKey] = String(playerId);
-          }
-
           const game = await Game.findById(roomKey)
             .select("players questions currentQuestionIndex started")
             .lean();
@@ -391,12 +383,26 @@ nextApp
           const currentQuestionId = game.questions[game.currentQuestionIndex];
           if (!currentQuestionId) return;
 
-          // Atomic update ensures a player can only submit once per question even on rapid clicks
+          const currentTask = await Task.findById(currentQuestionId).select("mode").lean();
+          if (!currentTask) return;
+
+          const isBuzzerQuestion = currentTask.mode === "buzzer" || Boolean(answer.isBuzzer);
+
+          // Fast in-memory lock check strictly for buzzer questions to prevent race conditions under load
+          if (isBuzzerQuestion) {
+            if (buzzerLocks[roomKey] && buzzerLocks[roomKey] !== String(playerId)) {
+              return;
+            }
+            buzzerLocks[roomKey] = String(playerId);
+          }
+
+          // For buzzer mode only the first player can answer; for all other modes each player can submit once
+          const filter = isBuzzerQuestion
+            ? { _id: currentQuestionId, playeranswers: { $size: 0 } }
+            : { _id: currentQuestionId, "playeranswers.playerId": { $ne: playerObjectId } };
+
           const updatedQuestion = await Task.findOneAndUpdate(
-            {
-              _id: currentQuestionId,
-              "playeranswers.playerId": { $ne: playerObjectId },
-            },
+            filter,
             {
               $push: {
                 playeranswers: {
