@@ -144,16 +144,15 @@ export default function InfoLanding() {
         >
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl mt-20 mb-20 font-extrabold tracking-tight">
-              Interaktives Quiz mit{" "}
+              Dein eigenes{" "}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 to-blue-600">
-                echtem Buzzer-Feeling
+                Live-Quiz im Browser
               </span>
             </h1>
             <p className="mt-15 text-lg opacity-90">
-              Du möchtest mit Freunden oder der Familie einen schönen Abend haben und vielleicht ein
-              bisschen Wettkampf ins Spiel bringen? Dann erstelle dein Spiel, lade Teilnehmende per
-              Link ein – und los geht’s. Live-Punkte, so viele Fragen wie du willst, so viele
-              Spieler wie du willst, so viele Spiele wie du willst!
+              Du planst einen Quizabend mit Freunden oder der Familie? Erstelle deine eigenen
+              Fragen, teile den Einladungslink und spielt direkt im Browser gegeneinander. Ohne
+              App-Download und ohne Account-Zwang für deine Mitspieler.
             </p>
           </div>
 
@@ -180,7 +179,7 @@ export default function InfoLanding() {
                       aria-hidden="true"
                     />
                     <span className="font-medium">{c.label}</span>
-                    <span className="sr-only"> — {c.hint}</span>
+                    <span className="sr-only"> - {c.hint}</span>
                   </li>
                 ))}
               </ul>
@@ -190,8 +189,8 @@ export default function InfoLanding() {
               <details className="group rounded-2xl border border-white/60 dark:border-white/10 bg-white/50 dark:bg-white/5 p-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between">
                   <div>
-                    <h1 className="text-lg font-semibold">Alle Schritte im Detail</h1>
-                    <p className="text-sm opacity-70">Vom ersten Klick bis zum Start deiner Show</p>
+                    <h1 className="text-lg font-semibold">So funktioniert es</h1>
+                    <p className="text-sm opacity-70">In wenigen Schritten zum eigenen Quiz</p>
                   </div>
                   <span
                     className="ml-4 inline-flex h-8 w-8 items-center justify-center rounded-md bg-white/70 dark:bg-white/10 transition-transform duration-200 group-open:rotate-45 group-open:bg-green-200 dark:group-open:bg-green-700"
@@ -230,8 +229,8 @@ export default function InfoLanding() {
                   ))}
                 </ol>
                 <div className="mt-5 rounded-xl border border-white/60 dark:border-white/10 bg-white/60 dark:bg-white/10 px-4 py-3 text-sm">
-                  Tipp: In den Einstellungen kannst du Punktelogik, Zeitlimits und Buzzer-Countdowns
-                  an dein Event anpassen.
+                  Tipp: In den Einstellungen legst du fest, ob deine Fragen in einer festen
+                  Reihenfolge oder zufällig gemischt gestellt werden.
                 </div>
               </details>
             </div>
@@ -259,28 +258,29 @@ export default function InfoLanding() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card title="Was ist TheBuzz?">
             <p>
-              TheBuzz ist ein leichtes Live-Quiz-System mit Buzzer-Mechanik. Admins starten Runden,
-              Teilnehmende treten via Link bei – ohne Account, nur mit einem Benutzernamen.
+              TheBuzz ist ein Quiz-Tool für den Browser. Ein Spielleiter erstellt und moderiert die
+              Fragerunde, alle anderen treten einfach per Link und Benutzernamen bei.
             </p>
           </Card>
           <Card title="Für wen ist es?">
             <ul className="list-disc pl-5 space-y-1">
-              <li>Event-Moderation & Teambuilding</li>
-              <li>Unterricht & Trainings</li>
-              <li>Hochzeiten, Geburtstage, Partys</li>
-              <li>Streamer & Vereine</li>
+              <li>Spieleabende mit Freunden & Familie</li>
+              <li>Geburtstage, Hochzeiten & Feiern</li>
+              <li>Schule, Uni & Vereine</li>
+              <li>Teamevents & Streams</li>
             </ul>
           </Card>
           <Card title="Kostet es etwas?">
             <p>
-              Nein, TheBuzz ist komplett <strong>kostenlos</strong> nutzbar.
+              Nein. TheBuzz ist komplett <strong>kostenlos</strong>. Es gibt keine Abos, keine
+              versteckten Kosten und keine Bezahlschranken.
             </p>
           </Card>
           <Card title="Hat es ein Spielerlimit?">
             <p>
-              Für die MVP-Phase empfehle ich bis zu <strong>~50 Teilnehmende </strong>
-              pro Spiel (abhängig von Netzwerk und Endgeräten). Größere Gruppen sind technisch
-              möglich – Feedback willkommen!
+              Ein festes Limit gibt es nicht. Ausgelegt ist alles für Runden mit bis zu{" "}
+              <strong>50 Mitspielern</strong> gleichzeitig, je nach Verbindung gehen aber auch
+              größere Gruppen.
             </p>
           </Card>
         </div>
@@ -288,7 +288,7 @@ export default function InfoLanding() {
 
       <section id="occasions" className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
         <h2 className="text-2xl font-bold tracking-tight">Wo kann man TheBuzz spielen?</h2>
-        <p className="mt-2 opacity-80">Ein paar Anlässe, bei denen es richtig Spaß macht.</p>
+        <p className="mt-2 opacity-80">Ein paar Beispiele, wofür sich eigene Quizrunden anbieten.</p>
 
         <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <OccasionCard
@@ -299,19 +299,19 @@ export default function InfoLanding() {
           />
           <OccasionCard
             title="Geburtstage & Partys"
-            note="Schnelle Runden, hohe Energie."
+            note="Gemeinsame Quizrunde am Abend."
             href="/images/birthday.jpg"
             alt="picture of a birthdaycake"
           />
           <OccasionCard
             title="Teamevents"
-            note="Icebreaker & Wissensduelle."
+            note="Lockeres Quiz für Kollegen und Gruppen."
             href="/images/teamevent.jpg"
             alt="Two women are sitting in the snow on chairs in front of a table with a laptop."
           />
           <OccasionCard
             title="Schule & Uni"
-            note="Lernen mit Show-Moment."
+            note="Wissen wiederholen und gemeinsam testen."
             href="/images/school.jpg"
             alt="picture of a school libary"
           />
@@ -322,20 +322,21 @@ export default function InfoLanding() {
         <h2 className="text-2xl font-bold tracking-tight">FAQ</h2>
         <div className="mt-6 divide-y divide-white/40 dark:divide-white/10 rounded-xl border border-white/50 dark:border-white/10 bg-white/40 dark:bg-white/5">
           <FaqItem q="Brauchen Spieler einen Account?">
-            Nein. Spieler treten über einen Einladungslink bei und wählen nur einen Namen.
+            Nein. Spieler treten über einen Einladungslink bei und geben nur ihren Namen ein.
           </FaqItem>
           <FaqItem q="Welche Geräte werden unterstützt?">
-            Moderne Browser auf Smartphone, Tablet und Desktop. Kein App-Download nötig.
+            Alle aktuellen Browser auf Smartphone, Tablet und PC. Ein App-Download ist nicht nötig.
           </FaqItem>
           <FaqItem q="Wie erstelle ich eine Runde?">
-            Als Admin registrieren/anmelden, Spiel anlegen, Fragen hinzufügen, Link teilen – fertig.
+            Als Spielleiter anmelden, Spiel anlegen, Fragen eintragen und den Einladungslink an die
+            Gruppe schicken.
           </FaqItem>
           <FaqItem q="Gibt es verschiedene Spielmodi?">
-            Ja: Buzzer-Runden, Multiple-Choice, Bilderfragen, Wahr/Falsch und offene Schätzfragen.
+            Ja: Buzzer-Fragen, Multiple-Choice, Bilderfragen, Wahr/Falsch und offene Schätzfragen.
           </FaqItem>
-          <FaqItem q="Ist TheBuzz DSGVO-freundlich?">
-            Spieleraccounts sind nicht nötig; wir speichern minimal erforderliche Daten für den
-            Spielbetrieb. (Details siehe Datenschutz.)
+          <FaqItem q="Welche Daten werden gespeichert?">
+            Mitspieler brauchen kein Konto. Es werden nur die Daten gespeichert, die für den Ablauf
+            des Spiels technisch nötig sind. Details stehen in der Datenschutzerklärung.
           </FaqItem>
         </div>
 
@@ -351,7 +352,7 @@ export default function InfoLanding() {
 
       <footer className="border-t border-white/50 dark:border-white/10">
         <div className="mx-auto max-w-6xl px-4 py-6 text-sm opacity-80 flex flex-wrap items-center justify-between gap-3">
-          <p>© {new Date().getFullYear()} TheBuzz — Indie-Projekt</p>
+          <p>© {new Date().getFullYear()} TheBuzz</p>
           <div className="flex items-center gap-4">
             <Link href="/impressum" className="hover:opacity-80">
               Impressum

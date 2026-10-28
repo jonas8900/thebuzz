@@ -174,11 +174,11 @@ export default function Terms() {
 
             <div className="rounded-2xl border border-white/60 dark:border-white/10 bg-white/70 dark:bg-white/10 p-6 shadow-sm">
               <h2 id="verfuegbarkeit" className="text-xl font-bold tracking-tight">
-                7. Verfügbarkeit, Änderungen, Beta-Status
+                7. Verfügbarkeit &amp; Änderungen
               </h2>
               <ul className="mt-3 list-disc pl-5 text-sm opacity-90 space-y-1">
                 <li>
-                  TheBuzz befindet sich im aktiven Ausbau (MVP). Es kann zu Wartungen, Updates und
+                  TheBuzz wird laufend weiterentwickelt. Es kann daher zu Wartungen, Updates und
                   Änderungen kommen.
                 </li>
                 <li>Wir schulden keine bestimmte Verfügbarkeit oder störungsfreien Betrieb.</li>

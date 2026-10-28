@@ -16,15 +16,14 @@ export default function StatsPanel() {
   const totals = data?.data?.totals;
   const last7d = data?.data?.last7d;
 
-  const placeholders = Array.from({ length: 5 }, () => ({ kpi: 0, label: "Lade…" }));
+  const placeholders = Array.from({ length: 5 }, () => ({ kpi: 0, label: "Lade..." }));
 
   return (
     <section className="mx-auto max-w-6xl">
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">TheBuzz in Zahlen</h2>
-          <p className="text-sm opacity-75">Live aus der Datenbank · aktualisiert beim Seitenaufruf</p>
-          <p className="text-sm opacity-75">Die Statistiken sind aus den letzten 7 Tagen</p>
+          <p className="text-sm opacity-75">Übersicht aus der Datenbank (inkl. Veränderung der letzten 7 Tage)</p>
         </div>
         <div className="hidden sm:flex gap-2 text-xs opacity-70">
           <span className="rounded-full bg-emerald-500/12 px-2 py-[2px] text-emerald-700 dark:text-emerald-300">
