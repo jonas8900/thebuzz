@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
@@ -28,5 +28,6 @@ taskSchema.index({ correctanswer: 1 });
 taskSchema.index({ createdAt: 1 });
 
 const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
+Task.default = Task;
 
-export default Task;
+module.exports = Task;

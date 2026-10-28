@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
 const { Schema } = mongoose;
 
@@ -75,5 +75,6 @@ userSchema.index({ yourgames: 1 });
 userSchema.index({ createdAt: 1 });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);
+User.default = User;
 
-export default User;
+module.exports = User;

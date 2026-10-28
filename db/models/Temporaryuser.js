@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
@@ -28,5 +28,6 @@ temporaryuserSchema.index({ createdAt: 1 });
 
 const Temporaryuser =
   mongoose.models.Temporaryuser || mongoose.model("Temporaryuser", temporaryuserSchema);
+Temporaryuser.default = Temporaryuser;
 
-export default Temporaryuser;
+module.exports = Temporaryuser;

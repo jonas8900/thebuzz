@@ -1,5 +1,5 @@
-import mongoose from "mongoose";
-import { hashIp } from "../../lib/hashIp.js";
+const mongoose = require("mongoose");
+const { hashIp } = require("../../lib/hashIp");
 
 const { Schema } = mongoose;
 
@@ -75,5 +75,6 @@ gameSchema.index({ finished: 1 });
 gameSchema.index({ createdAt: 1 });
 
 const Game = mongoose.models.Game || mongoose.model("Game", gameSchema);
+Game.default = Game;
 
-export default Game;
+module.exports = Game;
