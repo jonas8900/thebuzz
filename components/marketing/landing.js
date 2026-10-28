@@ -53,15 +53,6 @@ export default function InfoLanding() {
             >
               Anmelden
             </Link>
-            <Link
-              href="https://ko-fi.com/rhaigo"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg border bg-yellow-400/90 px-3 py-2 text-center font-semibold text-blue-700 hover:bg-blue-50 dark:hover:bg-yellow-400 transition"
-              aria-label="Buy me a coffee"
-            >
-              ☕ Buy me a coffee
-            </Link>
           </div>
         </nav>
         <nav className="md:hidden mx-auto flex max-w-6xl items-center justify-between px-4 py-2">
@@ -136,16 +127,6 @@ export default function InfoLanding() {
                     className="rounded-lg border border-blue-600 px-3 py-2 text-center font-semibold text-blue-700 hover:bg-blue-50 dark:hover:bg-white/10"
                   >
                     Kostenlos starten
-                  </Link>
-
-                  <Link
-                    href="https://ko-fi.com/rhaigo"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-lg border bg-yellow-400/90 px-3 py-2 text-center font-semibold text-blue-700 hover:bg-blue-50 dark:hover:bg-yellow-400 transition"
-                    aria-label="Buy me a coffee"
-                  >
-                    ☕ Buy me a coffee
                   </Link>
                 </div>
               </div>
@@ -292,13 +273,7 @@ export default function InfoLanding() {
           </Card>
           <Card title="Kostet es etwas?">
             <p>
-              MVP-Phase: <strong>kostenlos</strong>. Wenn es dir gefällt, unterstütze mich gern über{" "}
-              <em>
-                <Link href="https://ko-fi.com/rhaigo" target="_blank" className="underline">
-                  Buy me a coffee
-                </Link>
-              </em>
-              .
+              Nein, TheBuzz ist komplett <strong>kostenlos</strong> nutzbar.
             </p>
           </Card>
           <Card title="Hat es ein Spielerlimit?">

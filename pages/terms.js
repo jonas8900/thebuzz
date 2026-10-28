@@ -54,11 +54,8 @@ export default function Terms() {
                 2. Nutzung ist unentgeltlich
               </h2>
               <p className="mt-2 opacity-90">
-                Die Nutzung von TheBuzz ist derzeit <strong>kostenlos</strong>. Es bestehen keine
-                Zahlungsverpflichtungen. Freiwillige Unterstützungen (z. B. via Ko-fi) sind
-                unabhängig vom Nutzungsverhältnis und haben keinen Einfluss auf Funktionen oder
-                Supportansprüche. Wir behalten uns vor, zukünftig optionale, gesondert
-                gekennzeichnete Premium-Funktionen anzubieten.
+                Die Nutzung von TheBuzz ist <strong>kostenlos</strong>. Es bestehen keine
+                Zahlungsverpflichtungen.
               </p>
             </div>
 

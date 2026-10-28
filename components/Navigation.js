@@ -2,7 +2,6 @@ import SwitchingThemes from "./theme/switchThemes";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signOut } from "next-auth/react";
-import Link from "next/link";
 
 export default function Navigation({
   session,
@@ -247,18 +246,6 @@ export default function Navigation({
                         <div className="flex items-center px-3 py-2 text-gray-600 mt-3 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700">
                           <SwitchingThemes />
                         </div>
-                      </div>
-
-                      <div className="space-y-3 pt-6">
-                        <Link
-                          href="https://ko-fi.com/rhaigo"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-3 w-full flex items-center justify-center rounded-lg bg-yellow-400/90 px-3 py-2 text-sm font-semibold text-black shadow hover:bg-yellow-400 transition"
-                          aria-label="Buy me a coffee"
-                        >
-                          ☕ Buy me a coffee
-                        </Link>
                       </div>
                     </div>
                   </nav>
