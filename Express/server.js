@@ -1,6 +1,12 @@
 const express = require("express");
 const http = require("http");
+const dns = require("dns");
 const { Server } = require("socket.io");
+
+// Prefer IPv4 DNS resolution inside Docker containers to avoid IPv6 egress timeouts (e.g. Google OAuth)
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 const next = require("next");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -142,6 +148,14 @@ nextApp
 
     // Trust reverse proxy headers (Coolify Traefik / Heroku router)
     server.set("trust proxy", 1);
+
+    // Redirect bare domain to www so NextAuth cookies, OAuth callbacks, and Socket.IO always use the canonical host
+    server.use((req, res, nextMiddleware) => {
+      if (req.headers.host === "thebuzz-quiz.de") {
+        return res.redirect(301, `https://www.thebuzz-quiz.de${req.originalUrl}`);
+      }
+      nextMiddleware();
+    });
 
     const httpServer = http.createServer(server);
     const io = new Server(httpServer, {
