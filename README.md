@@ -1,52 +1,44 @@
-# TheBuzz – Echtzeit-Quizplattform mit Live-Buzzer
+# TheBuzz - Echtzeit-Quiz
 
-**TheBuzz** ist eine webbasierte Multiplayer-Quiz-Applikation für Spieleabende, Streams, Hochzeiten und Teamevents. Ein Host (Admin) erstellt eigene Quizrunden mit verschiedenen Fragetypen und teilt einen Einladungslink – alle Mitspieler treten direkt im Browser über ihr Smartphone oder den Desktop bei, ohne sich vorher registrieren zu müssen.
-
----
+**TheBuzz** ist ein webbasiertes Multiplayer-Quiz für Spieleabende, Streams, Hochzeiten und Teamevents. Ein Host (Admin) erstellt eigene Quizrunden mit verschiedenen Fragetypen und teilt einen Einladungslink. Alle Mitspieler treten direkt im Browser über ihr Smartphone oder den Desktop bei, ohne sich vorher registrieren zu müssen.
 
 ## Warum ich das Projekt gebaut habe
 
-Klassische Quiz-Tools scheitern bei privaten Runden oder kleineren Events oft an zwei Dingen: Entweder müssen sich alle Mitspieler erst umständlich ein Konto anlegen, oder es fehlt das echte TV-Show-Gefühl mit einem Live-Buzzer, bei dem Millisekunden entscheiden.
+Viele bestehende Quiz-Tools scheitern bei privaten Runden oder kleineren Events an zwei Dingen: Entweder müssen sich alle Mitspieler erst umständlich ein Konto anlegen, oder es fehlt ein echter Buzzer, bei dem Millisekunden entscheiden.
 
-Mit **TheBuzz** wollte ich eine schlanke Lösung bauen, die der Spielleiter komplett in der Hand hat (Fragen freischalten, Buzzer sperren/freigeben, Punkte bei offenen Schätz- oder Bilderfragen manuell vergeben) und bei der Mitspieler in fünf Sekunden startklar sind.
-
----
+Mit **TheBuzz** wollte ich eine schlanke Lösung bauen, die der Spielleiter komplett in der Hand hat (Fragen freischalten, Buzzer sperren/freigeben, Punkte bei offenen Schätz- oder Bilderfragen manuell vergeben) und bei der Mitspieler in ein paar Sekunden per Link im Spiel sind.
 
 ## Architektur & Technische Umsetzung
 
 ### 1. Custom Node.js Server (Next.js + Express + Socket.IO)
 Anstatt Frontend und WebSocket-Server getrennt zu betreiben, läuft Next.js eingebettet in einem eigenen Express-Server (`Express/server.js`) auf demselben HTTP-Server wie Socket.IO:
-- **Keine Verbindungsabbrüche bei Lastspitzen:** Während einer laufenden Runde werden Statusänderungen (Buzzer, Antworten, Punkte, aktive Frage) ausschließlich über WebSockets an den jeweiligen Raum (`gameId`) gepusht.
-- **Anti-Cheat auf Protokollebene:** Bevor ein Spielstatus per WebSocket an die verbundenen Clients gesendet wird, entfernt der Server automatisch das Feld `correctanswer` aller Fragen. Erst wenn der Admin aktiv auf *„Antwort aufdecken"* klickt, wird die Lösung für genau diese Frage freigegeben.
+- **Reine WebSocket-Kommunikation im Spiel:** Während einer laufenden Runde werden Statusänderungen (Buzzer, Antworten, Punkte, aktive Frage) ausschließlich über WebSockets an den jeweiligen Raum (`gameId`) gepusht. Dadurch entstehen im laufenden Spiel keine unnötigen HTTP-Requests.
+- **Anti-Cheat auf Protokollebene:** Bevor ein Spielstatus per WebSocket an die verbundenen Clients gesendet wird, entfernt der Server automatisch das Feld `correctanswer` aller Fragen. Erst wenn der Admin aktiv auf "Antwort aufdecken" klickt, wird die Lösung für genau diese Frage freigegeben.
 - **Atomare Buzzer-Locks im Arbeitsspeicher:** Wenn 20 Personen gleichzeitig auf den Buzzer drücken, entscheidet ein synchroner In-Memory-Lock (`buzzerLocks`) vor dem Datenbank-Schreibzugriff, wer zuerst gedrückt hat. Dadurch sind Race-Conditions durch parallele MongoDB-Abfragen ausgeschlossen.
 
 ### 2. Hybrides Session-Konzept mit NextAuth
 Die Anwendung unterscheidet zwischen zwei Nutzergruppen innerhalb derselben NextAuth-Konfiguration (`pages/api/auth/[...nextauth].js`):
-- **Admins:** Klassischer Login über E-Mail/Passwort (`bcryptjs`) oder Google OAuth, geschützt durch Rate-Limiting (`rate-limiter-flexible`) und strikte Ownership-Prüfungen (`lib/authGuard.js`) auf allen Admin-Endpunkten.
+- **Admins:** Login über E-Mail/Passwort (`bcryptjs`) oder Google OAuth, geschützt durch Rate-Limiting (`rate-limiter-flexible`) und Ownership-Prüfungen (`lib/authGuard.js`) auf allen Admin-Endpunkten.
 - **Gast-Spieler (`Temporaryuser`):** Treten nur mit einem Anzeigenamen bei (eindeutig pro Spiel über einen Compound-Index `{ username: 1, yourgame: 1 }`). Falls auf dem Smartphone der Bildschirm ausgeht oder die Seite neu geladen wird, stellt das System die bestehende Spiel-Session anhand der `gameId` wieder her, ohne dass Punkte verloren gehen.
 
 ### 3. Datenschutzfreundlicher Missbrauchsschutz (SHA-256 IP-Hashing)
-Da Mitspieler keinen Account benötigen, müssen Störer im Zweifel vom Spielleiter aus einer Lobby entfernt und für dieses Spiel gesperrt werden können. Um dabei keine personenbezogenen Klartext-IPs in der Datenbank zu speichern, werden Client-IPs direkt beim Beitritt über `lib/hashIp.js` normalisiert und mit einem serverseitigen Salt (`IP_HASH_SALT`) per SHA-256 gehasht.
+Da Mitspieler keinen Account benötigen, müssen Störer im Zweifel vom Spielleiter aus einer Lobby entfernt und für dieses Spiel gesperrt werden können. Um dabei keine personenbezogenen Klartext-IPs in der Datenbank zu speichern, werden Client-IPs direkt beim Beitritt über `lib/hashIp.js` normalisiert und per SHA-256 gehasht.
 
 ### 4. Client-seitige Bildkomprimierung & S3-Upload
 Für Bilderfragen können Admins eigene Fotos hochladen. Um die Bandbreite aller Mitspieler im Live-Spiel zu schonen, konvertiert und komprimiert das Frontend (`browser-image-compression` im Web-Worker) jedes Bild vor dem Upload automatisch ins `WebP`-Format (`< 300 KB`, max. 900 px). Serverseitig werden Dateigröße und MIME-Type durch `formidable` validiert und anschließend in einen AWS S3 Bucket übertragen.
 
 ### 5. Datenbank-Resilienz & Server-Side Caching
 - **Statistik-Cache:** Die Live-Statistiken auf der Startseite (`/api/stats`) bündeln fünf parallele MongoDB-Abfragen über einen serverseitigen In-Memory-Cache (5 Minuten TTL inklusive In-Flight-Deduplizierung bei gleichzeitigem Seitenaufruf).
-- **MongoDB Keep-Alive:** Über den Endpunkt `/api/health` (kombiniert mit einem internen 6-Stunden-Intervall und einer geplanten GitHub Action in `.github/workflows/mongodb-keepalive.yml`) wird ein leichtgewichtiger Lesezugriff ausgeführt, damit der MongoDB-Cluster bei längeren Spielpausen nicht in den Ruhemodus wechselt.
+- **MongoDB Keep-Alive:** Über den Endpunkt `/api/health` (kombiniert mit einem internen 6-Stunden-Intervall und einer geplanten GitHub Action in `.github/workflows/mongodb-keepalive.yml`) wird regelmäßig ein leichtgewichtiger Lesezugriff ausgeführt, damit der MongoDB-Cluster bei längeren Spielpausen nicht pausiert.
 
----
-
-## Unterstützte Fragemodi & Spielmechaniken
+## Spielmodi
 
 - **Buzzer-Frage:** Alle sehen die Frage, der schnellste Buzzer sperrt die Runde für alle anderen und der Spieler gibt seine Antwort live ab.
 - **Multiple Choice:** Bis zu 4 Antwortmöglichkeiten mit automatischer Punktevergabe beim Aufdecken der Lösung.
 - **Wahr / Falsch:** Schnelle Entscheidungsrunde mit automatischer Auswertung.
 - **Offene Frage / Schätzfrage:** Alle Spieler tippen ihre Antwort verdeckt ein; der Admin deckt die Antworten auf und vergibt die Punkte per Klick an die beste(n) Antwort(en).
 - **Bilderfrage:** Wie die offene Frage, ergänzt um ein komprimiertes Vorschaubild.
-- **Reihenfolge:** Fragen können entweder zufällig (`random`) gezogen oder vorab per Drag & Drop (`@dnd-kit`) in eine feste Dramaturgie (`sorted`) gebracht werden.
-
----
+- **Reihenfolge:** Fragen können entweder zufällig (`random`) gezogen oder vorab per Drag & Drop (`@dnd-kit`) in eine feste Reihenfolge (`sorted`) gebracht werden.
 
 ## Tech-Stack
 
@@ -55,17 +47,15 @@ Für Bilderfragen können Admins eigene Fotos hochladen. Um die Bandbreite aller
 - **Datenbank:** MongoDB & Mongoose
 - **Authentifizierung:** NextAuth.js (Credentials, Google OAuth, Guest Provider)
 - **Storage & E-Mail:** AWS SDK v3 (`@aws-sdk/client-s3`), Nodemailer
-- **Deployment:** Vorbereitet für Coolify (Hetzner) sowie Heroku (`Procfile`)
-
----
+- **Deployment:** Coolify (Hetzner)
 
 ## Lokale Entwicklung
 
 ### 1. Repository klonen & Abhängigkeiten installieren
 
 ```bash
-git clone https://github.com/Rhaigo/takethebuzz.git
-cd takethebuzz
+git clone https://github.com/jonas8900/thebuzz.git
+cd thebuzz
 npm install
 ```
 
@@ -80,7 +70,6 @@ MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/takethebuzz
 # NextAuth & Security
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=dein-nextauth-secret
-IP_HASH_SALT=dein-geheimer-salt-fuer-ip-hashes
 HEALTHCHECK_TOKEN=optionaler-token-fuer-api-health
 
 # Google OAuth (optional für Admin-Login)
@@ -110,9 +99,7 @@ Da die Anwendung einen Custom Express-Server für Socket.IO nutzt, wird im Entwi
 npm run dev:server
 ```
 
-Die Anwendung ist anschließend unter `http://localhost:3000` erreichbar.
-
-### 4. Produktions-Build & Start (z. B. für Coolify)
+### 4. Produktions-Build & Start
 
 ```bash
 npm run build
