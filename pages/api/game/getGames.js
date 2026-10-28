@@ -1,38 +1,25 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../db/connect";
 import Game from "../../../db/models/Game";
+import { requireAdminSession } from "@/lib/authGuard";
 
-export default async function handler(request, response) {
-    await dbConnect();
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Methode nicht erlaubt" });
+  }
 
-    
-      const session = await getServerSession(request, response, authOptions); 
-      
-      if (!session) {
-        return response.status(403).json({ message: "No access" });
-      }
+  await dbConnect();
 
-      if (request.method === "GET") {
-        try {
-          const userId = session.user.id;
-    
-          
-          const games = await Game.find({ admin: userId })
-                .select("_id name")
-                .lean();
+  const session = await requireAdminSession(req, res);
+  if (!session) return;
 
-    
-          if (games.length === 0) {
-            return response.status(404).json({ message: "Keine Spiele gefunden" });
-          }
-    
-          return response.status(200).json(games); 
-        } catch (error) {
-          console.error("Fehler beim Abrufen der Spiele:", error);
-          return response.status(400).json({ error: error.message });
-        }
-      } else {
-        response.status(405).json({ error: "Methode nicht erlaubt" });
-      }
-    }
+  try {
+    const games = await Game.find({ admin: session.user.id })
+      .select("_id name")
+      .lean();
+
+    return res.status(200).json(games);
+  } catch (error) {
+    console.error("Error fetching admin games:", error);
+    return res.status(500).json({ error: error.message });
+  }
+}

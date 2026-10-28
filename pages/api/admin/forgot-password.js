@@ -1,33 +1,29 @@
 import crypto from "crypto";
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
-import nodemailer from "nodemailer";
-import { RateLimiterMemory } from 'rate-limiter-flexible';
+import { RateLimiterMemory } from "rate-limiter-flexible";
 import { normalizeEmail } from "@/lib/normalizeInput";
-
-function getClientIp(req) {
-  const xff = req.headers["x-forwarded-for"];
-  const ipFromXff = Array.isArray(xff) ? xff[0] : (xff?.split(",")[0] || "");
-  return ipFromXff || req.socket?.remoteAddress || "unknown";
-}
+import { getClientIpFromReq } from "@/lib/hashIp";
+import { createMailTransporter } from "@/lib/mailer";
 
 const rateLimiter = new RateLimiterMemory({
-    points: 10, 
-    duration: 60 * 5, 
+  points: 5,
+  duration: 60 * 5,
 });
-
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const ip = getClientIp(req);
+  const ip = getClientIpFromReq(req);
 
   try {
     await rateLimiter.consume(ip);
-  } catch (rateLimiterRes) {
-    return res.status(429).json({ error: "Zu viele Anfragen. Dein Account wurde für 5 Minuten gesperrt. Bitte versuche es später erneut." });
+  } catch {
+    return res.status(429).json({
+      error: "Zu viele Anfragen in kurzer Zeit. Bitte warte 5 Minuten und versuche es erneut.",
+    });
   }
 
   await dbConnect();
@@ -36,16 +32,15 @@ export default async function handler(req, res) {
   const email = normalizeEmail(rawEmail);
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(200).json({
-      message:
-        "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
+      message: "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
     });
   }
-  
+
   try {
     const user = await User.findOne({ email }).select("_id provider");
     if (user && user.provider === "credentials") {
       const rawToken = crypto.randomBytes(32).toString("hex");
-      const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex")
+      const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
       const TTL_MS = 15 * 60 * 1000;
 
       user.passwordResetToken = hashedToken;
@@ -53,19 +48,9 @@ export default async function handler(req, res) {
       await user.save();
 
       const resetLink = `${process.env.NEXT_PUBLIC_SERVER_URL}/reset-password?token=${rawToken}`;
-      
+      const transporter = createMailTransporter();
 
-      const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: {
-          user: process.env.GMAIL_USER,
-          pass: process.env.GMAIL_PASSWORD,
-        },
-      });
-
-      const mailOptions = {
+      await transporter.sendMail({
         from: process.env.GMAIL_USER,
         to: email,
         subject: "TheBuzz - Passwort zurücksetzen",
@@ -80,20 +65,16 @@ export default async function handler(req, res) {
               </div>
             </body>
           </html>`,
-      };
-
-      await transporter.sendMail(mailOptions);
-      
+      });
     }
+
     return res.status(200).json({
-      message:
-        "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
+      message: "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
     });
   } catch (error) {
-     console.error("Fehler beim Zurücksetzen:", error);
+    console.error("Password reset email error:", error);
     return res.status(200).json({
-      message:
-        "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
+      message: "Wenn ein Account existiert, wurde eine E-Mail zum Zurücksetzen gesendet.",
     });
   }
 }

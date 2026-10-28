@@ -1,10 +1,12 @@
-// components/marketing/number-ticker.jsx
 import { useEffect, useRef, useState } from "react";
 import { animate } from "framer-motion";
 
+/**
+ * Animated numeric counter that smoothly transitions between values.
+ */
 export default function NumberTicker({ value = 0, duration = 0.6, locale = "de-DE" }) {
   const [display, setDisplay] = useState(0);
-  const last = useRef(0); // startet bei 0, merkt sich den letzten Wert
+  const last = useRef(0);
   const controlsRef = useRef(null);
 
   useEffect(() => {

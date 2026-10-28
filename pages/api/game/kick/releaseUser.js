@@ -1,10 +1,5 @@
-import { getServerSession } from "next-auth";
-import Temporaryuser from "../../../../db/models/Temporaryuser";
-import Game from "../../../../db/models/Game";
-import { authOptions } from "../../auth/[...nextauth]";
 import dbConnect from "../../../../db/connect";
-
-
+import { requireGameOwner } from "@/lib/authGuard";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -13,39 +8,43 @@ export default async function handler(req, res) {
 
   const { userId, gameId } = req.body;
 
-  if (!gameId || !gameId) {
-    return res.status(400).json({ message: "Missing gameId or playerId" });
+  if (!gameId || !userId) {
+    return res.status(400).json({ message: "Spiel-ID und Benutzer-ID sind erforderlich." });
   }
 
   await dbConnect();
 
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(403).json({ message: "No access" });
-  }
+  const auth = await requireGameOwner(req, res, gameId);
+  if (!auth) return;
 
   try {
-    const game = await Game.findById(gameId);
-    if (!game) {
-      return res.status(404).json({ message: "Game not found" });
+    const { game } = auth;
+
+    const blockedEntry = game.blockedusers.find(
+      (entry) => entry.user && entry.user.toString() === String(userId)
+    );
+
+    if (!blockedEntry) {
+      return res.status(404).json({ message: "Blockierter Spieler nicht gefunden." });
     }
 
-    const userIp = game.blockedusers.find(user => user.user.toString() === userId)?.blockedip;
-    const foundIp = game.blockedips.find(ip => ip === userIp);
+    const userIp = blockedEntry.blockedip;
 
+    game.blockedusers = game.blockedusers.filter(
+      (entry) => entry.user && entry.user.toString() !== String(userId)
+    );
 
-
-    if (!foundIp || !userIp) {
-        return res.status(403).json({ message: "Userip oder ip nicht gefunden" });
+    if (userIp) {
+      game.blockedips = game.blockedips.filter((ip) => ip !== userIp);
     }
 
-    game.blockedusers = game.blockedusers.filter(user => user.user.toString() !== userId);
-    game.blockedips = game.blockedips.filter(ip => ip !== userIp);
-    
     await game.save();
-    res.status(200).json({ message: "User erfolgreich unblocked" });
+    return res.status(200).json({ message: "Spieler erfolgreich entsperrt." });
   } catch (error) {
-    console.error("Fehler beim unblocken des Users:", error);
-    return res.status(500).json({ message: "Fehler beim löschen des Users", error: error.message });
+    console.error("Error unblocking user:", error);
+    return res.status(500).json({
+      message: "Fehler beim Entsperren des Spielers.",
+      error: error.message,
+    });
   }
 }

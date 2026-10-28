@@ -1,147 +1,122 @@
-# thebuzz — Realtime-Buzzer für Quiz & Spielabende
+# TheBuzz – Echtzeit-Quizplattform mit Live-Buzzer
 
-**thebuzz** ist eine schlanke, latenzarme Spiele-App: Host startet eine Runde, Spieler*innen treten per Link/QR bei und bei einer Buzzerfrage gilt z.B. **der erste Klick zählt** — inkl. Sperre für alle Nachfolgenden, Reset durch den Host und klarer Anzeige, wer gewonnen hat. Es gibt verschiedene Fragekategorien wie Bilderfragen, Multiple Choice, Offene Frage und Wahr oder Falsch.
-
-> Live-Demo: https://thebuzz-quiz.de
+**TheBuzz** ist eine webbasierte Multiplayer-Quiz-Applikation für Spieleabende, Streams, Hochzeiten und Teamevents. Ein Host (Admin) erstellt eigene Quizrunden mit verschiedenen Fragetypen und teilt einen Einladungslink – alle Mitspieler treten direkt im Browser über ihr Smartphone oder den Desktop bei, ohne sich vorher registrieren zu müssen.
 
 ---
 
-## Features
+## Warum ich das Projekt gebaut habe
 
-- **Echtzeit-Buzzer**: “First click wins”, alle anderen werden sofort gesperrt, bis der Host zurücksetzt.
-- **Mehrere Fragekategorien**: z.B. Multiple Choice, Bilderfrage (wer ist das auf dem Bild?), Offene Frage (Wie viele Einwohner hat Deutschland) etc.
-- **Mehrere Räume**: Trennung per Game-ID/Room (keine Cross-Talks zwischen Spielen).  
-- **Host-Kontrollen**: Reset/Unlock, optional Spieler blockieren/entfernen.  
-- **UI-Feedback**: deutliche Hervorhebung/Auszeichnung des Gewinners, Animationen.  
-- **Simple Join-Experience**: per Direktlink oder QR (mobil-freundlich) mit eingabe eines Benutzernames ist der Benutzername gleich (bei Absturtz des Browsers) wird er aufgrund des localstorages nachgeladen.  
-- **Optionale Abuse-Guards**: Rate-Limit; IP-basierte Blocks (gehasht) möglich.  
-- **Erweiterbar**: Team-Modus, Timer usw. sind leicht nachrüstbar.
+Klassische Quiz-Tools scheitern bei privaten Runden oder kleineren Events oft an zwei Dingen: Entweder müssen sich alle Mitspieler erst umständlich ein Konto anlegen, oder es fehlt das echte TV-Show-Gefühl mit einem Live-Buzzer, bei dem Millisekunden entscheiden.
+
+Mit **TheBuzz** wollte ich eine schlanke Lösung bauen, die der Spielleiter komplett in der Hand hat (Fragen freischalten, Buzzer sperren/freigeben, Punkte bei offenen Schätz- oder Bilderfragen manuell vergeben) und bei der Mitspieler in fünf Sekunden startklar sind.
+
+---
+
+## Architektur & Technische Umsetzung
+
+### 1. Custom Node.js Server (Next.js + Express + Socket.IO)
+Anstatt Frontend und WebSocket-Server getrennt zu betreiben, läuft Next.js eingebettet in einem eigenen Express-Server (`Express/server.js`) auf demselben HTTP-Server wie Socket.IO:
+- **Keine Verbindungsabbrüche bei Lastspitzen:** Während einer laufenden Runde werden Statusänderungen (Buzzer, Antworten, Punkte, aktive Frage) ausschließlich über WebSockets an den jeweiligen Raum (`gameId`) gepusht.
+- **Anti-Cheat auf Protokollebene:** Bevor ein Spielstatus per WebSocket an die verbundenen Clients gesendet wird, entfernt der Server automatisch das Feld `correctanswer` aller Fragen. Erst wenn der Admin aktiv auf *„Antwort aufdecken"* klickt, wird die Lösung für genau diese Frage freigegeben.
+- **Atomare Buzzer-Locks im Arbeitsspeicher:** Wenn 20 Personen gleichzeitig auf den Buzzer drücken, entscheidet ein synchroner In-Memory-Lock (`buzzerLocks`) vor dem Datenbank-Schreibzugriff, wer zuerst gedrückt hat. Dadurch sind Race-Conditions durch parallele MongoDB-Abfragen ausgeschlossen.
+
+### 2. Hybrides Session-Konzept mit NextAuth
+Die Anwendung unterscheidet zwischen zwei Nutzergruppen innerhalb derselben NextAuth-Konfiguration (`pages/api/auth/[...nextauth].js`):
+- **Admins:** Klassischer Login über E-Mail/Passwort (`bcryptjs`) oder Google OAuth, geschützt durch Rate-Limiting (`rate-limiter-flexible`) und strikte Ownership-Prüfungen (`lib/authGuard.js`) auf allen Admin-Endpunkten.
+- **Gast-Spieler (`Temporaryuser`):** Treten nur mit einem Anzeigenamen bei (eindeutig pro Spiel über einen Compound-Index `{ username: 1, yourgame: 1 }`). Falls auf dem Smartphone der Bildschirm ausgeht oder die Seite neu geladen wird, stellt das System die bestehende Spiel-Session anhand der `gameId` wieder her, ohne dass Punkte verloren gehen.
+
+### 3. Datenschutzfreundlicher Missbrauchsschutz (SHA-256 IP-Hashing)
+Da Mitspieler keinen Account benötigen, müssen Störer im Zweifel vom Spielleiter aus einer Lobby entfernt und für dieses Spiel gesperrt werden können. Um dabei keine personenbezogenen Klartext-IPs in der Datenbank zu speichern, werden Client-IPs direkt beim Beitritt über `lib/hashIp.js` normalisiert und mit einem serverseitigen Salt (`IP_HASH_SALT`) per SHA-256 gehasht.
+
+### 4. Client-seitige Bildkomprimierung & S3-Upload
+Für Bilderfragen können Admins eigene Fotos hochladen. Um die Bandbreite aller Mitspieler im Live-Spiel zu schonen, konvertiert und komprimiert das Frontend (`browser-image-compression` im Web-Worker) jedes Bild vor dem Upload automatisch ins `WebP`-Format (`< 300 KB`, max. 900 px). Serverseitig werden Dateigröße und MIME-Type durch `formidable` validiert und anschließend in einen AWS S3 Bucket übertragen.
+
+### 5. Datenbank-Resilienz & Server-Side Caching
+- **Statistik-Cache:** Die Live-Statistiken auf der Startseite (`/api/stats`) bündeln fünf parallele MongoDB-Abfragen über einen serverseitigen In-Memory-Cache (5 Minuten TTL inklusive In-Flight-Deduplizierung bei gleichzeitigem Seitenaufruf).
+- **MongoDB Keep-Alive:** Über den Endpunkt `/api/health` (kombiniert mit einem internen 6-Stunden-Intervall und einer geplanten GitHub Action in `.github/workflows/mongodb-keepalive.yml`) wird ein leichtgewichtiger Lesezugriff ausgeführt, damit der MongoDB-Cluster bei längeren Spielpausen nicht in den Ruhemodus wechselt.
+
+---
+
+## Unterstützte Fragemodi & Spielmechaniken
+
+- **Buzzer-Frage:** Alle sehen die Frage, der schnellste Buzzer sperrt die Runde für alle anderen und der Spieler gibt seine Antwort live ab.
+- **Multiple Choice:** Bis zu 4 Antwortmöglichkeiten mit automatischer Punktevergabe beim Aufdecken der Lösung.
+- **Wahr / Falsch:** Schnelle Entscheidungsrunde mit automatischer Auswertung.
+- **Offene Frage / Schätzfrage:** Alle Spieler tippen ihre Antwort verdeckt ein; der Admin deckt die Antworten auf und vergibt die Punkte per Klick an die beste(n) Antwort(en).
+- **Bilderfrage:** Wie die offene Frage, ergänzt um ein komprimiertes Vorschaubild.
+- **Reihenfolge:** Fragen können entweder zufällig (`random`) gezogen oder vorab per Drag & Drop (`@dnd-kit`) in eine feste Dramaturgie (`sorted`) gebracht werden.
 
 ---
 
 ## Tech-Stack
 
-- **Next.js (Pages-Router)** als UI-Framework  
-- **Express** + **Socket.IO** (oder kompatibel) für Realtime/WebSockets  
-- **Tailwind CSS** für Styles  
-- Node.js-Runtime; Deployment z. B. auf **Heroku** (via `Procfile`)
-
-> Die App ist so aufgebaut, dass Frontend (Next.js) und ein kleiner Node/Express-Server zusammenarbeiten. Der WebSocket-Teil sorgt für die Millisekunden-Reaktionszeit und Raum-Isolation.
-
----
-
-## Architektur
-
-```
-Next.js (pages/) ── UI, Routing, SSR/CSR
-         │
-         ├─ components/   → UI-Bausteine
-         ├─ styles/       → Tailwind & globale Styles
-         ├─ public/       → statische Assets
-         ├─ lib/          → Helper/Client-Logik (z. B. Socket-Client)
-         ├─ db/           → (optional) Persistenz/Adapter
-         └─ Express/      → Node/Express-Server + WebSocket (Rooms, Buzz-Lock)
-```
-
-**Ablauf (vereinfacht):**
-
-1. Host erstellt/öffnet ein Spiel → Client tritt `room=<gameId>` bei.  
-2. Spieler*innen joinen denselben Room.  
-3. Beim ersten *Buzz* (Event) setzt der Server atomar den Gewinner und sperrt weitere Eingaben.  
-4. Host kann per Event `reset` wieder freischalten.  
-5. Broadcasts halten alle UIs synchron (Gewinner, Liste wartender Spieler, Status).
+- **Frontend:** Next.js 15 (Pages Router), React 18, Tailwind CSS v4, Framer Motion, SWR, `@dnd-kit`
+- **Backend & Echtzeit:** Node.js 20, Express, Socket.IO
+- **Datenbank:** MongoDB & Mongoose
+- **Authentifizierung:** NextAuth.js (Credentials, Google OAuth, Guest Provider)
+- **Storage & E-Mail:** AWS SDK v3 (`@aws-sdk/client-s3`), Nodemailer
+- **Deployment:** Vorbereitet für Coolify (Hetzner) sowie Heroku (`Procfile`)
 
 ---
 
-## Getting Started (lokal)
+## Lokale Entwicklung
 
-**Voraussetzungen**
-
-- Node.js ≥ 18 wird empfohlen
-- npm oder pnpm
-
-**Installation**
+### 1. Repository klonen & Abhängigkeiten installieren
 
 ```bash
-git clone https://github.com/jonas8900/thebuzz.git
-cd thebuzz
+git clone https://github.com/Rhaigo/takethebuzz.git
+cd takethebuzz
 npm install
 ```
 
-**Entwicklung starten**
+### 2. Umgebungsvariablen konfigurieren
 
-> Je nach Skript-Setup in `package.json`:
-```bash
-# Variante A (Frontend + Server werden zusammen gestartet)
-npm run dev
-
-# Variante B (getrennt)
-npm run dev:next      # Next.js
-npm run dev:server    # Express/WebSocket mit nodemon
-```
-
-**Umgebungsvariablen (.env.local)**
+Lege im Projektverzeichnis eine `.env.local` an:
 
 ```env
-# Beispiel – an deine Skripte anpassen
-PORT=3000
-# Falls der WS-Server auf anderem Port läuft:
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+# Datenbank
+MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/takethebuzz
+
+# NextAuth & Security
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=dein-nextauth-secret
+IP_HASH_SALT=dein-geheimer-salt-fuer-ip-hashes
+HEALTHCHECK_TOKEN=optionaler-token-fuer-api-health
+
+# Google OAuth (optional für Admin-Login)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+
+# AWS S3 (für Bilderfragen)
+AWS_REGION=eu-central-1
+AWS_BUCKET_NAME=...
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+
+# SMTP / Nodemailer (für Passwort-Reset & Einladungs-Mails)
+EMAIL_USER=...
+EMAIL_PASS=...
+
+# Optional: Falls der Socket-Server auf einer separaten Domain läuft
+# (Bei lokalem Betrieb oder Single-Container-Deployment auf Coolify leer lassen)
+NEXT_PUBLIC_SOCKET_URL=
 ```
 
-**Build & Start (prod)**
+### 3. Entwicklungsserver starten
+
+Da die Anwendung einen Custom Express-Server für Socket.IO nutzt, wird im Entwicklungsbetrieb der kombinierte Server gestartet:
+
+```bash
+npm run dev:server
+```
+
+Die Anwendung ist anschließend unter `http://localhost:3000` erreichbar.
+
+### 4. Produktions-Build & Start (z. B. für Coolify)
 
 ```bash
 npm run build
 npm start
 ```
 
----
-
-## Ordnerstruktur
-
-```
-/Express         # Express/WebSocket-Server (Rooms, Buzz-Handling, Reset)
-/components      # UI-Komponenten
-/db              # (optional) DB/Persistenz
-/lib             # Utilities, Client-Logik (z. B. Socket-Client)
-/pages           # Pages-Router (Next.js)
-/public          # statische Dateien
-/styles          # Tailwind & globale Styles
-Procfile         # Heroku Process-Definition
-```
-
----
-
-## Roadmap / Ideen
-
-- [ ] Soundeffekte beim Buzz & beim Reset
-- [ ] Team-Modus (Gruppenbuzzer, Mehrfachgewinner)
-- [ ] Timer/Countdown pro Runde
-- [X] Admin-Seite „Blockierte Spieler“ (Block/Unblock, Grund, Ablaufdatum)
-- [X] Optionale Persistenz (Gewinner-Historie, Scores)
-- [ ] Mehrsprachigkeit (DE/EN)
-
----
-
-## Deployment
-
-### Heroku
-
-- `Procfile` ist vorhanden – damit lässt sich der Node-Prozess direkt starten.  
-- Wichtige Variablen: `PORT` (wird von Heroku gesetzt).  
-- Buildpacks: Node.js; evtl. zusätzliche für Monorepo/mehrere Prozesse je nach Setup.
-
-### Alternativen
-
-- Railway, Fly.io, Render (Node-App mit dauerhaftem Prozess).  
-- Vercel eignet sich vor allem fürs Next.js-Frontend; für WebSockets meist separaten Node-Server betreiben.
-
----
-
-## Mitmachen
-
-Issues und PRs sind willkommen. Bitte achte auf:
-- klare Commit-Messages
-- kurze PRs mit Kontext
-- keine sensiblen Secrets in Commits
+`npm start` führt `node Express/server.js` im Produktionsmodus aus und liefert sowohl die gebaute Next.js-App als auch den Socket.IO-Server über denselben Port (`PORT`) aus.

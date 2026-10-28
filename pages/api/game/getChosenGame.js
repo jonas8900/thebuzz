@@ -1,62 +1,61 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
 import dbConnect from "../../../db/connect";
 import Game from "../../../db/models/Game";
 import User from "../../../db/models/User";
-import Temporaryuser from "../../../db/models/Temporaryuser";
-import Task from "../../../db/models/Task";
+import "../../../db/models/Temporaryuser";
+import "../../../db/models/Task";
+import { requireAdminSession } from "@/lib/authGuard";
 
-export default async function handler(request, response) {
-  await dbConnect();
-
-  const session = await getServerSession(request, response, authOptions); 
-
-  if (!session) {
-    return response.status(403).json({ message: "No access" });
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Methode nicht erlaubt" });
   }
 
-  if (request.method === "GET") {
-    try {
-      const userId = session.user.id;
+  await dbConnect();
 
+  const session = await requireAdminSession(req, res);
+  if (!session) return;
 
+  try {
+    const userId = session.user.id;
+    const user = await User.findById(userId).lean();
 
-      if (!userId) {
-        return response.status(403).json({ message: "Kein User gefunden" });
+    if (!user) {
+      return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    }
+
+    let chosenGameId = user.chosengame;
+
+    // Fallback to the admin's most recent game if chosengame is unset
+    if (!chosenGameId) {
+      const firstGame = await Game.findOne({ admin: userId }).select("_id").lean();
+      if (firstGame) {
+        chosenGameId = firstGame._id;
+        await User.findByIdAndUpdate(userId, { $set: { chosengame: chosenGameId } });
       }
+    }
 
-      const user = await User.findById(userId).lean();
+    if (!chosenGameId) {
+      return res.status(200).json({ chosenGame: null });
+    }
 
-      if (!user) {
-        return response.status(404).json({ message: "User nicht gefunden" });
-      }
-
-      const chosenGameId = user.chosengame; 
-
-      const chosenGame = await Game.findById(chosenGameId)
+    const chosenGame = await Game.findOne({ _id: chosenGameId, admin: userId })
       .populate({
-        path: "players.playerId", 
-        select: "username points"  
-      })  
-      .populate("admin", "username")      
+        path: "players.playerId",
+        select: "username points",
+      })
+      .populate("admin", "username")
       .populate("scores.results.player")
       .populate("questions")
       .populate({
         path: "blockedusers.user",
         model: "Temporaryuser",
-        select: "username"
+        select: "username",
       })
       .lean();
-    
-    
 
-
-      return response.status(200).json({ chosenGame });
-    } catch (error) {
-      console.error("Fehler beim Abrufen der Spiele:", error);
-      return response.status(400).json({ error: error.message });
-    }
-  } else {
-    response.status(405).json({ error: "Methode nicht erlaubt" });
+    return res.status(200).json({ chosenGame: chosenGame || null });
+  } catch (error) {
+    console.error("Error fetching chosen game:", error);
+    return res.status(500).json({ error: error.message });
   }
 }

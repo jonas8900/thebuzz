@@ -8,22 +8,24 @@ const taskSchema = new Schema({
   answers: { type: [String], required: false },
   playeranswers: [
     {
-      playerId: {type: mongoose.Schema.Types.ObjectId, ref: "Temporaryuser", required: false},
+      playerId: { type: mongoose.Schema.Types.ObjectId, ref: "Temporaryuser", required: false },
       username: { type: String, required: false },
       answer: { type: String, required: false },
-    }
+    },
   ],
   mode: { type: String, required: true },
   gameId: { type: String, required: true },
   points: { type: Number, required: true },
   pointsgiven: { type: Boolean, required: true },
   file: { type: String },
+  createdAt: { type: Date, default: Date.now },
 });
 
-taskSchema.index({playeranswers: 1});
-taskSchema.index({gameId: 1});
-taskSchema.index({question: 1});
-taskSchema.index({correctanswer: 1});
+taskSchema.index({ playeranswers: 1 });
+taskSchema.index({ gameId: 1 });
+taskSchema.index({ question: 1 });
+taskSchema.index({ correctanswer: 1 });
+taskSchema.index({ createdAt: 1 });
 
 const Task = mongoose.models.Task || mongoose.model("Task", taskSchema);
 

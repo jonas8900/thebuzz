@@ -1,38 +1,36 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
+import mongoose from "mongoose";
 import dbConnect from "../../../db/connect";
 import Game from "../../../db/models/Game";
-import Task from "../../../db/models/Task";
-import Temporaryuser from "../../../db/models/Temporaryuser";
-import User from "../../../db/models/User";
+import "../../../db/models/Temporaryuser";
+import "../../../db/models/User";
 
-export default async function handler(request, response) {
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Methode nicht erlaubt" });
+  }
+
   await dbConnect();
 
-  if (request.method === "GET") {
-    try {
-      const { x } = request.query;
+  try {
+    const { x } = req.query;
 
-      if (!x || x == undefined) {
-        return response.status(400).json({ error: "ID ist erforderlich" });
-      }
+    if (!x || !mongoose.Types.ObjectId.isValid(x)) {
+      return res.status(400).json({ error: "Gültige Spiel-ID ist erforderlich" });
+    }
 
-  
-      const game = await Game.findById(x)
+    const game = await Game.findById(x)
+      .select("-questions -blockedips -blockedusers")
       .populate({
-        path: "players.playerId", 
-        select: "username points"  
+        path: "players.playerId",
+        select: "username points",
       })
       .populate("admin", "username")
-      .populate("scores.results.player")
+      .populate("scores.results.player", "username points")
       .lean();
-  
-      return response.status(200).json(game);
-    } catch (error) {
-      console.error("Fehler beim Abrufen der Spiele:", error);
-      return response.status(400).json({ error: error.message });
-    }
-  } else {
-    response.status(405).json({ error: "Methode nicht erlaubt" });
+
+    return res.status(200).json(game);
+  } catch (error) {
+    console.error("Error fetching game metadata:", error);
+    return res.status(400).json({ error: error.message });
   }
 }

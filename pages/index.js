@@ -4,9 +4,7 @@ import Navigation from "../components/Navigation";
 import { useSession } from "next-auth/react";
 import Panel from "../components/Panel/Panel";
 import Loading from "../components/Status/Loading";
-import Link from "next/link";
 import InfoLanding from "@/components/marketing/landing";
-import Head from "next/head";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -17,12 +15,8 @@ export default function Home() {
 
   if (status === "loading") return <Loading />;
 
+  const isAuthorized = status === "authenticated" && !session?.user?.isGuest;
 
-
-  const isAuthorized =
-    status === "authenticated" && !session?.user?.isGuest;
-
-  
   const fadeIn = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.8 } },
@@ -30,15 +24,13 @@ export default function Home() {
 
   return (
     <>
-
-    {isAuthorized ? (
+      {isAuthorized ? (
         <motion.main
           className="bg-gradient-to-br from-violet-100 via-fuchsia-50 to-sky-50 bg-contain bg-center bg-no-repeat h-screen w-full flex flex-col justify-center items-center relative overflow-hidden dark:from-[#0b0b13] dark:via-[#11142a] dark:to-[#1b0f2e]"
           initial="hidden"
           animate="visible"
           variants={fadeIn}
         >
-
           <motion.div initial="hidden" animate="visible" variants={fadeIn}>
             <Navigation
               session={session}
@@ -88,9 +80,9 @@ export default function Home() {
             </div>
           </motion.div>
         </motion.main>
-        ) : (
-          <InfoLanding/>
-        )}
+      ) : (
+        <InfoLanding />
+      )}
     </>
   );
 }

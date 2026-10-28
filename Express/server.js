@@ -5,53 +5,43 @@ const next = require("next");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const crypto = require("crypto");  
+const crypto = require("crypto");
+
 dotenv.config({ path: ".env.local" });
 
-
-function hashIp(ip) {
-  return crypto.createHash("sha256").update(ip).digest("hex");
+/**
+ * Normalizes IPv6 loopback and IPv4-mapped IPv6 addresses to standard IPv4 format.
+ */
+function normalizeIp(ip = "") {
+  if (!ip) return "unknown";
+  const cleaned = String(ip).trim();
+  if (cleaned === "::1") return "127.0.0.1";
+  if (cleaned.startsWith("::ffff:")) return cleaned.slice(7);
+  return cleaned;
 }
 
+/**
+ * Hashes an IP address using SHA-256 for privacy-compliant ban checks.
+ */
+function hashIp(ip = "") {
+  const normalized = normalizeIp(ip);
+  if (/^[a-f0-9]{64}$/i.test(normalized)) return normalized.toLowerCase();
+  return crypto.createHash("sha256").update(normalized).digest("hex");
+}
+
+/**
+ * Extracts the real client IP from a Socket.IO connection behind reverse proxies (for coolify).
+ */
 function getClientIp(socket) {
-  const rawIp =
-  socket.handshake.headers["x-forwarded-for"]?.split(",")[0] || socket.handshake.address;
-
-  const normalizeIp = (ip) => {
-    if (ip === "::1") return "127.0.0.1";
-    if (ip.startsWith("::ffff:")) return ip.replace("::ffff:", ""); 
-    return ip;
-  };
-
-
-  const clientIp = normalizeIp(rawIp);
-  return clientIp;
-}
-
-
-
-async function emitGameUpdate(io, gameId) {
-  try {
-    const updatedGame = await Game.findById(gameId)
-            .populate({
-              path: "players.playerId", 
-              select: "username points"  
-            })
-            .populate("admin", "username")
-            .populate("scores.results.player")
-            .populate("questions")
-            .lean();
-    if (updatedGame) {
-      io.to(gameId).emit("gameUpdated", { game: updatedGame });
-    }
-
-  } catch (error) {
-    console.error("Fehler bei emitGameUpdate:", error);
-  }
+  const xff = socket.handshake?.headers?.["x-forwarded-for"];
+  const rawIp = Array.isArray(xff)
+    ? xff[0]
+    : xff?.split(",")[0]?.trim() || socket.handshake?.address || "unknown";
+  return normalizeIp(rawIp);
 }
 
 const Game = require("../db/models/Game").default;
-const User = require("../db/models/User").default;
+require("../db/models/User");
 const Temporary = require("../db/models/Temporaryuser").default;
 const Task = require("../db/models/Task").default;
 
@@ -62,27 +52,101 @@ const handle = nextApp.getRequestHandler();
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGODB_URI;
 
-mongoose
-  .connect(MONGO_URI, {
-    dbName: process.env.DATABASE_NAME,
-  })
-  .then(() => {
-    console.log("MongoDB verbunden");
-  })
-  .catch((error) => console.log("MongoDB Fehler:", error));
+// In-memory state for active rooms, buzzer locks, and answer reveal flags
+const activePlayersPerGame = {};
+const buzzerLocks = {};
+const revealedAnswersPerGame = {};
 
-console.log("Server wird vorbereitet...");
+/**
+ * Broadcasts the current game state to all clients in the room.
+ * Strips question solutions (`correctanswer`) while answers are not revealed to prevent client-side inspection.
+ */
+async function emitGameUpdate(io, gameId) {
+  try {
+    if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+
+    const query = Game.findById(gameId)
+      .select("-blockedips -blockedusers")
+      .populate({
+        path: "players.playerId",
+        select: "username points",
+      })
+      .populate("admin", "username")
+      .populate("questions");
+
+    // Populate historical score snapshots so end-of-game leaderboards render immediately
+    query.populate("scores.results.player", "username points");
+
+    const updatedGame = await query.lean();
+    if (!updatedGame) return;
+
+    const shouldReveal = Boolean(revealedAnswersPerGame[gameId]);
+    if (!shouldReveal && Array.isArray(updatedGame.questions)) {
+      updatedGame.questions = updatedGame.questions.map((q) => {
+        if (!q || typeof q !== "object") return q;
+        const { correctanswer, ...safeQuestion } = q;
+        return safeQuestion;
+      });
+    }
+
+    io.to(String(gameId)).emit("gameUpdated", { game: updatedGame });
+  } catch (error) {
+    console.error("Error in emitGameUpdate:", error);
+  }
+}
+
+/**
+ * Connects to MongoDB with automatic reconnection and periodic keep-alive pings
+ * so MongoDB Atlas free-tier clusters do not pause.
+ */
+async function connectMongoWithKeepAlive() {
+  try {
+    await mongoose.connect(MONGO_URI, {
+      dbName: process.env.DATABASE_NAME,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    });
+    console.log("MongoDB connected");
+
+    try {
+      await mongoose.connection.collection("temporaryusers").dropIndex("username_1");
+    } catch {
+      // Index already dropped
+    }
+
+    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        if (mongoose.connection.readyState === 1) {
+          await mongoose.connection.db.admin().ping();
+          await mongoose.connection.db
+            .collection("games")
+            .findOne({}, { projection: { _id: 1 } });
+        }
+      } catch (pingErr) {
+        console.error("MongoDB keep-alive ping error:", pingErr.message);
+      }
+    }, SIX_HOURS_MS).unref();
+  } catch (error) {
+    console.error("MongoDB connection error:", error);
+  }
+}
+
+connectMongoWithKeepAlive();
 
 nextApp
   .prepare()
   .then(() => {
-    console.log("Next.js ist bereit!");
-
     const server = express();
+
+    // Trust reverse proxy headers (Coolify Traefik / Heroku router)
+    server.set("trust proxy", 1);
+
     const httpServer = http.createServer(server);
     const io = new Server(httpServer, {
       cors: {
-        origin: "*",
+        origin: process.env.NEXT_PUBLIC_SERVER_URL || true,
         methods: ["GET", "POST"],
       },
       path: "/socket.io",
@@ -90,315 +154,349 @@ nextApp
 
     server.use(cors());
 
-    const activePlayersPerGame = {};
-
     io.on("connection", (socket) => {
       socket.on("joinGame", async ({ gameId, playerId, username }) => {
+        if (!gameId || !playerId || !mongoose.Types.ObjectId.isValid(gameId) || !mongoose.Types.ObjectId.isValid(playerId)) {
+          return;
+        }
+
         const clientIp = getClientIp(socket);
+        const hashedIp = hashIp(clientIp);
 
         try {
           const game = await Game.findById(gameId);
-
-          if (!game) {
-            console.log("Game nicht gefunden!");
-            return;
-          }
-
-          const hashedIp = hashIp(clientIp);
+          if (!game) return;
 
           if (game.blockedips.includes(hashedIp)) {
-            console.log(`Verbindung von blockierter IP wurde abgelehnt.`);
             socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
-            await emitGameUpdate(io, gameId);
             return;
           }
 
-          socket.join(gameId);
-          socket.gameId = gameId;
-          socket.playerId = playerId;
-
-          if (!playerId) {
-            console.error("PlayerId ist ungültig:", playerId);
-            return;
-          }
+          const roomKey = String(gameId);
+          socket.join(roomKey);
+          socket.gameId = roomKey;
+          socket.playerId = String(playerId);
 
           const playerObjectId = new mongoose.Types.ObjectId(playerId);
-          
-          const player = await Temporary.findById(playerObjectId);
 
-          if (!activePlayersPerGame[gameId]) {
-            activePlayersPerGame[gameId] = [];
-          }
-
-          const alreadyJoined = activePlayersPerGame[gameId].some(
-            (p) => p.playerId === playerId
+          // Store hashed IP on the temporary user record so admin kicks ban the player's IP, not the admin's IP
+          const player = await Temporary.findByIdAndUpdate(
+            playerObjectId,
+            { $set: { ipHash: hashedIp } },
+            { new: true }
           );
 
-          if (!alreadyJoined) {
-            if (player) {
-              console.log("Player gefunden:", player); 
-              const points = player.points !== undefined ? player.points : 0; 
-              activePlayersPerGame[gameId].push({ playerId, username, points });
-            } else {
-              activePlayersPerGame[gameId].push({ playerId, username });
-            }
+          if (!activePlayersPerGame[roomKey]) {
+            activePlayersPerGame[roomKey] = [];
           }
-          
-          const isPlayerInGame = game.players.some(
-            (player) => player.playerId.toString() === playerObjectId.toString()
+
+          const existingIdx = activePlayersPerGame[roomKey].findIndex(
+            (p) => String(p.playerId) === String(playerId)
           );
 
-          console.log("is player ingame", isPlayerInGame);
-
-          if (!isPlayerInGame) {
-            console.log("Füge Spieler zur Datenbank hinzu");
-            game.players.push({ playerId: playerObjectId, username });
-            await game.save();
+          const points = player?.points !== undefined ? player.points : 0;
+          if (existingIdx === -1) {
+            activePlayersPerGame[roomKey].push({
+              playerId: String(playerId),
+              username: player?.username || username,
+              points,
+            });
           } else {
-            console.log("Spieler bereits in der Datenbank!");
+            activePlayersPerGame[roomKey][existingIdx].points = points;
           }
-      
-          await emitGameUpdate(io, gameId);
-          console.log("Aktive Spieler:", activePlayersPerGame[gameId]);
-          console.log("Aktive Spieler in der Datenbank:", game.players);
 
+          const isPlayerInGame = game.players.some(
+            (p) => p.playerId && p.playerId.toString() === playerObjectId.toString()
+          );
 
-          io.to(gameId).emit("activePlayers", {
-            players: activePlayersPerGame[gameId],
+          if (!isPlayerInGame && String(game.admin) !== String(playerId)) {
+            game.players.push({ playerId: playerObjectId, username: player?.username || username });
+            await game.save();
+          }
+
+          await emitGameUpdate(io, roomKey);
+
+          io.to(roomKey).emit("activePlayers", {
+            players: activePlayersPerGame[roomKey],
           });
-
-
         } catch (err) {
-          console.error("Fehler beim Beitritt:", err);
+          console.error("Error in joinGame:", err);
         }
+      });
+
+      socket.on("getUpdatedGame", async ({ gameId }) => {
+        if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+        const roomKey = String(gameId);
+        socket.join(roomKey);
+        await emitGameUpdate(io, roomKey);
       });
 
       socket.on("error", ({ message }) => {
-        console.error("Socket-Fehler:", message);
+        console.error("Socket error:", message);
       });
 
       socket.on("watchGame", async ({ gameId }) => {
-        console.log("Watcher tritt bei:", gameId);
+        if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
 
-        const clientIp = getClientIp(socket);
-
-        const hashedIp = hashIp(clientIp);
-
-        const game = await Game.findById(gameId).select("blockedips");
-        if (!game) {
-          console.log("Game nicht gefunden!");
-          return;
-        }
-
-  
-
-
-        if (game.blockedips.includes(hashedIp)) {
-          console.log(`Verbindung von blockierter IP wurde abgelehnt.`);
-          socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
-          return;
-        }
-
-        socket.join(gameId);
-
-
-        if (activePlayersPerGame[gameId]) {
-          io.to(gameId).emit("activePlayers", {
-            players: activePlayersPerGame[gameId],
-          });
-        }
-
-        if(activePlayersPerGame[gameId] === undefined || activePlayersPerGame[gameId].length === 0 || activePlayersPerGame[gameId] === null) {
-          activePlayersPerGame[gameId] = [];
-
-          const game = await Game.findById(gameId);
-          if(game) {
-            game.players = [];
-            await game.save();
-          }
-        }
-
-        await emitGameUpdate(io, gameId);
-      });
-
-
-      socket.on("startGame", async ({ gameId }) => {
         try {
-          const game = await Game.findById(gameId);
+          const clientIp = getClientIp(socket);
+          const hashedIp = hashIp(clientIp);
+          const roomKey = String(gameId);
 
-          if (!game || !game.questions || game.questions.length === 0) {
-            socket.emit("error", {
-              message: "Keine Fragen im Spiel vorhanden.",
-            });
+          const game = await Game.findById(roomKey).select("blockedips");
+          if (!game) return;
+
+          if (game.blockedips.includes(hashedIp)) {
+            socket.emit("banned", { message: "Du bist für dieses Spiel gesperrt." });
             return;
           }
 
+          socket.join(roomKey);
+
+          if (!activePlayersPerGame[roomKey]) {
+            activePlayersPerGame[roomKey] = [];
+          }
+
+          io.to(roomKey).emit("activePlayers", {
+            players: activePlayersPerGame[roomKey],
+          });
+
+          await emitGameUpdate(io, roomKey);
+        } catch (error) {
+          console.error("Error in watchGame:", error);
+        }
+      });
+
+      socket.on("kickPlayer", async ({ gameId, playerId }) => {
+        if (!gameId || !playerId) return;
+        const roomKey = String(gameId);
+
+        if (activePlayersPerGame[roomKey]) {
+          activePlayersPerGame[roomKey] = activePlayersPerGame[roomKey].filter(
+            (p) => String(p.playerId) !== String(playerId)
+          );
+          io.to(roomKey).emit("activePlayers", {
+            players: activePlayersPerGame[roomKey],
+          });
+        }
+
+        // Notify the kicked player's socket immediately
+        const roomSockets = await io.in(roomKey).fetchSockets();
+        for (const s of roomSockets) {
+          if (String(s.playerId) === String(playerId)) {
+            s.emit("banned", { message: "Du wurdest vom Spielleiter aus dem Spiel entfernt." });
+            s.leave(roomKey);
+          }
+        }
+
+        await emitGameUpdate(io, roomKey);
+      });
+
+      socket.on("startGame", async ({ gameId }) => {
+        try {
+          if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+          const roomKey = String(gameId);
+
+          const game = await Game.findById(roomKey);
+          if (!game || !game.questions || game.questions.length === 0) {
+            socket.emit("error", { message: "Keine Fragen im Spiel vorhanden." });
+            return;
+          }
+
+          // Shuffle questions if gamemode is set to random
+          if (game.gamemode === "random" && game.questions.length > 1) {
+            for (let i = game.questions.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [game.questions[i], game.questions[j]] = [game.questions[j], game.questions[i]];
+            }
+          }
+
+          delete buzzerLocks[roomKey];
+          revealedAnswersPerGame[roomKey] = false;
+
           game.started = true;
+          game.finished = false;
           game.currentQuestionIndex = 0;
           await game.save();
 
-          await emitGameUpdate(io, gameId);
+          await emitGameUpdate(io, roomKey);
 
           const firstQuestion = game.questions[0];
-
-          io.to(gameId).emit("gameStarted", { gameId });
-          io.to(gameId).emit("newQuestion", {
+          io.to(roomKey).emit("gameStarted", { gameId: roomKey });
+          io.to(roomKey).emit("newQuestion", {
             question: firstQuestion,
             index: 0,
             total: game.questions.length,
           });
-
-          console.log(`Spiel ${gameId} wurde gestartet!`);
         } catch (error) {
-          console.error("Fehler beim Starten des Spiels:", error);
+          console.error("Error starting game:", error);
           socket.emit("error", { message: "Spielstart fehlgeschlagen." });
         }
       });
-      
 
       socket.on("submitAnswer", async ({ gameId, playerId, username, answer }) => {
-        
         try {
-          const game = await Game.findById(gameId)
-            .populate("players", "username")
-            .populate("questions")
-            .lean();
-          if (!game) {
-            console.log("Spiel nicht gefunden");
+          if (!gameId || !playerId || !answer || !mongoose.Types.ObjectId.isValid(gameId) || !mongoose.Types.ObjectId.isValid(playerId)) {
             return;
           }
+          const roomKey = String(gameId);
+
+          // Fast in-memory lock check for buzzer answers to prevent race conditions under load
+          if (answer.answer === true) {
+            if (buzzerLocks[roomKey] && buzzerLocks[roomKey] !== String(playerId)) {
+              return;
+            }
+            buzzerLocks[roomKey] = String(playerId);
+          }
+
+          const game = await Game.findById(roomKey)
+            .select("players questions currentQuestionIndex started")
+            .lean();
+          if (!game || !game.started) return;
 
           const playerObjectId = new mongoose.Types.ObjectId(playerId);
-          const playerIndex = game.players.findIndex(
-            (player) => player.playerId.toString() === playerObjectId.toString()
+          const isPlayerInGame = game.players.some(
+            (p) => p.playerId && p.playerId.toString() === playerObjectId.toString()
+          );
+          if (!isPlayerInGame) return;
+
+          const currentQuestionId = game.questions[game.currentQuestionIndex];
+          if (!currentQuestionId) return;
+
+          // Atomic update ensures a player can only submit once per question even on rapid clicks
+          const updatedQuestion = await Task.findOneAndUpdate(
+            {
+              _id: currentQuestionId,
+              "playeranswers.playerId": { $ne: playerObjectId },
+            },
+            {
+              $push: {
+                playeranswers: {
+                  playerId: playerObjectId,
+                  username: answer.username || username,
+                  answer: String(answer.answer),
+                },
+              },
+            },
+            { new: true }
           );
 
-          if (playerIndex === -1) {
-            console.log("Spieler nicht gefunden");
-            return;
-          }
-
-          const questionObject = game.questions[game.currentQuestionIndex];
-          const question = await Task.findById(questionObject._id);
-
-          switch (question.mode) {
-            case "multiple":
-            case "open":
-            case "buzzer":
-            case "truefalse":
-            case "picture":
-              if (question.playeranswers.some((a) => a.playerId.toString() === playerObjectId.toString())) {
-                console.log("Spieler hat bereits geantwortet.");
-                return;
-              }
-              question.playeranswers.push(answer);
-              await question.save();
-              await emitGameUpdate(io, gameId);
-              break;
+          if (updatedQuestion) {
+            await emitGameUpdate(io, roomKey);
           }
         } catch (error) {
-          console.error("Fehler beim Speichern der Antwort:", error);
+          console.error("Error saving answer:", error);
           socket.emit("error", { message: "Antwort konnte nicht gespeichert werden." });
         }
       });
 
       socket.on("buzzer", async ({ gameId, username }) => {
-        if(gameId && username) {
-          io.to(gameId).emit("buzzerPressed", { username });
-          await emitGameUpdate(io, gameId);
-        } else {
-          console.log("Kein gameId empfangen!");
+        if (!gameId || !username) return;
+        const roomKey = String(gameId);
+
+        // Only emit buzzerPressed for the player holding the lock
+        if (socket.playerId && buzzerLocks[roomKey] && buzzerLocks[roomKey] !== String(socket.playerId)) {
+          return;
         }
+        if (!buzzerLocks[roomKey] && socket.playerId) {
+          buzzerLocks[roomKey] = String(socket.playerId);
+        }
+
+        io.to(roomKey).emit("buzzerPressed", { username });
+        await emitGameUpdate(io, roomKey);
       });
 
       socket.on("buzzerReset", async ({ gameId }) => {
-        if(gameId) {
-          io.to(gameId).emit("buzzerResetNow");
+        if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+        const roomKey = String(gameId);
 
-          const game = await Game.findById(gameId)
-          .populate("players", "username")
-          .populate("questions")
-          .lean();
-          if (!game) {
-            console.log("Spiel nicht gefunden");
-            return;
+        delete buzzerLocks[roomKey];
+        io.to(roomKey).emit("buzzerResetNow");
+
+        try {
+          const game = await Game.findById(roomKey)
+            .select("questions currentQuestionIndex")
+            .lean();
+          if (!game) return;
+
+          const currentQuestionId = game.questions[game.currentQuestionIndex];
+          if (currentQuestionId) {
+            await Task.findByIdAndUpdate(currentQuestionId, {
+              $set: { playeranswers: [] },
+            });
           }
-          
-          const questionObject = game.questions[game.currentQuestionIndex];
-          const question = await Task.findById(questionObject._id);
 
-            if (question) {
-              if(question.playeranswers.length > 0) {
-                question.playeranswers = [];
-                await question.save();
-                }
-              }
-
-            await emitGameUpdate(io, gameId);
-          } else {
-            console.log("Kein gameId empfangen!");
-          }
+          await emitGameUpdate(io, roomKey);
+        } catch (error) {
+          console.error("Error in buzzerReset:", error);
+        }
       });
 
-// Trigger eines States, damit die Spieler die richtige Antwort sehen können
       socket.on("showRightAnswer", async ({ gameId, showAnswer }) => {
+        if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+        const roomKey = String(gameId);
 
-          if (gameId) {
-            io.to(gameId).emit("showRightAnswerNow", showAnswer);
+        try {
+          revealedAnswersPerGame[roomKey] = Boolean(showAnswer);
+          const game = await Game.findById(roomKey).select("questions currentQuestionIndex");
 
-            const game = await Game.findById(gameId);
+          if (game && showAnswer) {
+            const currentQuestionId = game.questions[game.currentQuestionIndex];
+            const currentQuestion = await Task.findById(currentQuestionId);
 
-            if (game && showAnswer) {
-              const currentIndex = game.currentQuestionIndex;
-              const currentQuestionInGame = game.questions[currentIndex];
-              const currentId =  new mongoose.Types.ObjectId(currentQuestionInGame);
-              const currentQuestion = await Task.findById(currentId);
+            if (
+              currentQuestion?.playeranswers?.length > 0 &&
+              currentQuestion.mode !== "buzzer" &&
+              currentQuestion.mode !== "open" &&
+              currentQuestion.mode !== "picture" &&
+              currentQuestion.pointsgiven === false
+            ) {
+              const winningPlayerIds = [];
 
+              for (const answer of currentQuestion.playeranswers) {
+                if (!answer.playerId) continue;
 
-              if (currentQuestion?.playeranswers?.length > 0 && currentQuestion.mode !== "buzzer" && currentQuestion.mode !== "open" && currentQuestion.mode !== "picture" && currentQuestion.pointsgiven === false) {
-                for (const answer of currentQuestion.playeranswers) {
-                  const playerObjectId = new mongoose.Types.ObjectId(answer.playerId);
-                  const tempplayer = await Temporary.findById(playerObjectId);
-
-                  if (tempplayer) {
-
-                    if(answer.answer === currentQuestion.correctanswer && currentQuestion.mode !== "multiple") {
-                      tempplayer.points += currentQuestion.points;
-                      await tempplayer.save();
-                    } else if(currentQuestion.mode === "multiple") {
-                      const correctAnswerIndexInMultiple = parseInt(currentQuestion.correctanswer);
-                      const correctAnswer = currentQuestion.answers[correctAnswerIndexInMultiple];
-                      if(answer.answer === correctAnswer) {
-                        tempplayer.points += currentQuestion.points;
-                        await tempplayer.save();
-                      }
-                    }
+                if (currentQuestion.mode === "multiple") {
+                  const correctIndex = parseInt(currentQuestion.correctanswer, 10);
+                  const expectedAnswer = currentQuestion.answers?.[correctIndex];
+                  if (answer.answer === expectedAnswer) {
+                    winningPlayerIds.push(new mongoose.Types.ObjectId(answer.playerId));
                   }
+                } else if (String(answer.answer) === String(currentQuestion.correctanswer)) {
+                  winningPlayerIds.push(new mongoose.Types.ObjectId(answer.playerId));
                 }
-                currentQuestion.pointsgiven = true;
-                await currentQuestion.save();
               }
-              
 
-              await emitGameUpdate(io, gameId);
-            } else {
-              console.log("Spiel nicht gefunden!");
+              // Single bulk update instead of N+1 sequential queries
+              if (winningPlayerIds.length > 0) {
+                await Temporary.updateMany(
+                  { _id: { $in: winningPlayerIds } },
+                  { $inc: { points: currentQuestion.points } }
+                );
+              }
+
+              currentQuestion.pointsgiven = true;
+              await currentQuestion.save();
             }
-
-          } else {
-            console.log("Kein gameId empfangen!");
           }
-       });
 
-        
-
-
-            
-
+          // Emit updated game (including correctanswer when showAnswer is true) before toggling UI state
+          await emitGameUpdate(io, roomKey);
+          io.to(roomKey).emit("showRightAnswerNow", Boolean(showAnswer));
+        } catch (error) {
+          console.error("Error in showRightAnswer:", error);
+        }
+      });
 
       socket.on("nextQuestion", async ({ gameId }) => {
         try {
-          const game = await Game.findById(gameId);
+          if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+          const roomKey = String(gameId);
+
+          delete buzzerLocks[roomKey];
+          revealedAnswersPerGame[roomKey] = false;
+
+          const game = await Game.findById(roomKey);
           if (!game) {
             socket.emit("error", { message: "Spiel nicht gefunden." });
             return;
@@ -409,137 +507,129 @@ nextApp
             await game.save();
 
             const nextQuestion = game.questions[game.currentQuestionIndex];
-
-            io.to(gameId).emit("newQuestion", {
+            io.to(roomKey).emit("newQuestion", {
               question: nextQuestion,
               index: game.currentQuestionIndex,
               total: game.questions.length,
             });
+            io.to(roomKey).emit("showRightAnswerNow", false);
 
-
-            await emitGameUpdate(io, gameId);
+            await emitGameUpdate(io, roomKey);
           } else {
             game.finished = true;
-            await game.save(); 
-            await emitGameUpdate(io, gameId);
-            
 
-            const TemporaryUsers = await Temporary.find({ yourgame: gameId, finalscore: false });
+            const temporaryUsers = await Temporary.find({
+              yourgame: roomKey,
+              finalscore: false,
+            }).lean();
 
-            if (TemporaryUsers.length === 0) {
-              console.log("Es wurden keine Spieler mit diesen Kriterien gefunden.");
-            } else {
-              console.log("Gefundene Spieler:", TemporaryUsers);
-            }
-
-
-            const PlayerInCurrentGame = TemporaryUsers.filter((tempUser) => 
-              activePlayersPerGame[gameId].some((player) => tempUser._id.toString() === player.playerId.toString())
-            );
-
-            console.log("Spieler in der aktuellen Runde:", PlayerInCurrentGame);
+            const activeList = activePlayersPerGame[roomKey] || [];
+            const playersInCurrentGame =
+              activeList.length > 0
+                ? temporaryUsers.filter((tempUser) =>
+                    activeList.some((p) => String(p.playerId) === String(tempUser._id))
+                  )
+                : temporaryUsers;
 
             const scoreSnapshot = {
               date: new Date(),
-              results: PlayerInCurrentGame.map(user => ({
-                player: user._id,        
-                points: user.points,     
-                username: user.username  
-              }))
+              results: playersInCurrentGame.map((user) => ({
+                player: user._id,
+                points: user.points,
+                username: user.username,
+              })),
             };
-           
+
             if (scoreSnapshot.results.length > 0) {
               game.scores.push(scoreSnapshot);
-            } else {
-              console.log("Keine Spieler gefunden für dieses Spiel, daher wird kein Snapshot hinzugefügt.");
             }
 
             game.started = false;
             game.currentQuestionIndex = 0;
 
-            await Task.updateMany({ gameId: gameId }, { playeranswers: [], pointsgiven: false });
-            await Temporary.updateMany({ yourgame: gameId }, { 
-              points: 0,
-            });
-            await game.save();
-            socket.emit("showRightAnswer", { gameId, showAnswer: false });
+            await Promise.all([
+              Task.updateMany({ gameId: roomKey }, { playeranswers: [], pointsgiven: false }),
+              Temporary.updateMany({ yourgame: roomKey }, { points: 0 }),
+              game.save(),
+            ]);
 
-            await emitGameUpdate(io, gameId);
-
+            io.to(roomKey).emit("showRightAnswerNow", false);
+            await emitGameUpdate(io, roomKey);
           }
         } catch (error) {
-          console.error("Fehler beim Laden der nächsten Frage:", error);
+          console.error("Error loading next question:", error);
         }
       });
 
       socket.on("removePoints", async ({ gameId, playerId, points }) => {
         try {
-          const game = await Game.findById(gameId);
-          const player = await Temporary.findById(playerId);
+          if (!gameId || !playerId) return;
+          const roomKey = String(gameId);
+
+          const player = await Temporary.findByIdAndUpdate(
+            playerId,
+            { $inc: { points: -Number(points || 0) } },
+            { new: true }
+          );
+
           if (!player) {
             socket.emit("error", { message: "Spieler nicht gefunden." });
             return;
           }
-          if (!game) {
-            socket.emit("error", { message: "Spiel nicht gefunden." });
-            return;
-          }
 
-          player.points -= points;
-          await player.save();
-
-          await emitGameUpdate(io, gameId);
+          await emitGameUpdate(io, roomKey);
         } catch (error) {
-          console.error("Fehler beim Entfernen der Punkte:", error);
+          console.error("Error removing points:", error);
         }
       });
 
       socket.on("setPointsToUser", async ({ gameId, playerId, points }) => {
-        console.log("Punkte setzen:", { gameId, playerId, points });
         try {
-          const game = await Game.findById(gameId);
-          const player = await Temporary.findById(playerId);
+          if (!gameId || !playerId) return;
+          const roomKey = String(gameId);
+
+          const player = await Temporary.findByIdAndUpdate(
+            playerId,
+            { $inc: { points: Number(points || 0) } },
+            { new: true }
+          );
+
           if (!player) {
             socket.emit("error", { message: "Spieler nicht gefunden." });
             return;
           }
-          if (!game) {
-            socket.emit("error", { message: "Spiel nicht gefunden." });
-            return;
-          }
 
-          player.points += points;
-          await player.save();
-
-          await emitGameUpdate(io, gameId);
+          await emitGameUpdate(io, roomKey);
         } catch (error) {
-          console.error("Fehler beim Setzen der Punkte:", error);
+          console.error("Error awarding points:", error);
         }
       });
 
       socket.on("restartGame", async ({ gameId }) => {
-        console.log("Spiel wird neu gestartet:", gameId);
         try {
-          const game = await Game.findById(gameId);
+          if (!gameId || !mongoose.Types.ObjectId.isValid(gameId)) return;
+          const roomKey = String(gameId);
+
+          delete buzzerLocks[roomKey];
+          revealedAnswersPerGame[roomKey] = false;
+
+          const game = await Game.findByIdAndUpdate(
+            roomKey,
+            { $set: { finished: false, currentQuestionIndex: 0 } },
+            { new: true }
+          );
 
           if (!game) {
             socket.emit("error", { message: "Spiel nicht gefunden." });
             return;
-
           }
 
-          game.finished = false;
-          game.currentQuestionIndex = 0;
-          await game.save();
-          await emitGameUpdate(io, gameId);
-
-
+          await emitGameUpdate(io, roomKey);
         } catch (error) {
-          console.error("Fehler beim Neustarten des Spiels:", error);
+          console.error("Error restarting game:", error);
           socket.emit("error", { message: "Spiel konnte nicht neu gestartet werden." });
         }
       });
-    
 
       socket.on("disconnect", async () => {
         const gameId = socket.gameId;
@@ -548,7 +638,7 @@ nextApp
         if (gameId && playerId) {
           if (activePlayersPerGame[gameId]) {
             activePlayersPerGame[gameId] = activePlayersPerGame[gameId].filter(
-              (player) => player.playerId !== playerId
+              (player) => String(player.playerId) !== String(playerId)
             );
 
             if (activePlayersPerGame[gameId].length === 0) {
@@ -560,36 +650,29 @@ nextApp
             });
           }
 
-          console.log(`Spieler ${playerId} hat das Spiel verlassen`);
-          console.log("Aktive Spieler nach dem Entfernen:", activePlayersPerGame[gameId]);
-
-          const currentGame = await Game.findById(gameId);
-          if (currentGame) {
-            currentGame.players = currentGame.players.filter(
-              (player) => player.playerId.toString() !== playerId.toString()
-            );
-
-            try {
+          try {
+            const currentGame = await Game.findById(gameId);
+            if (currentGame) {
+              currentGame.players = currentGame.players.filter(
+                (player) => player.playerId && player.playerId.toString() !== playerId.toString()
+              );
               await currentGame.save();
-              console.log("Spieler aus der Datenbank entfernt:", playerId);
-            } catch (err) {
-              console.error("Fehler beim Speichern des Spiels:", err);
             }
+          } catch (err) {
+            console.error("Error removing disconnected player from game:", err);
           }
 
           socket.leave(gameId);
         }
       });
-
     });
-
 
     server.all("*", (req, res) => {
       return handle(req, res);
     });
 
     httpServer.listen(PORT, () =>
-      console.log(`🚀 Server läuft auf http://localhost:${PORT}`)
+      console.log(`Server running on http://localhost:${PORT}`)
     );
   })
   .catch((ex) => {

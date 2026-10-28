@@ -1,20 +1,14 @@
 import dbConnect from "../../../../db/connect";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]";
-import Task from "../../../../db/models/Task";
 import Game from "../../../../db/models/Game";
+import "../../../../db/models/Task";
+import { requireGameOwner } from "@/lib/authGuard";
 
 export default async function handler(req, res) {
   if (req.method !== "PATCH") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-    const session = await getServerSession(req, res, authOptions); 
-    
-    if (!session) {
-      return res.status(403).json({ message: "No access" });
-    }
-  
+  await dbConnect();
 
   const { gameId, newQuestionOrder } = req.body;
 
@@ -22,18 +16,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: "Ungültige Daten" });
   }
 
-  try {
-    await dbConnect();
+  const auth = await requireGameOwner(req, res, gameId);
+  if (!auth) return;
 
+  try {
     const updatedGame = await Game.findByIdAndUpdate(
       gameId,
       { questions: newQuestionOrder },
       { new: true }
     ).populate("questions");
 
-    return res.status(200).json({ message: "Reihenfolge aktualisiert", game: updatedGame });
+    return res.status(200).json({
+      message: "Reihenfolge aktualisiert",
+      game: updatedGame,
+    });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating question order:", error);
     return res.status(500).json({ message: "Serverfehler" });
   }
 }

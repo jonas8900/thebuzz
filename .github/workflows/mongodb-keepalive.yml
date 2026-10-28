@@ -1,0 +1,25 @@
+name: MongoDB Keep-Alive & Health Check
+
+on:
+  schedule:
+    # Runs every 12 hours to ensure MongoDB Atlas never pauses due to inactivity
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping-health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping application health endpoint
+        env:
+          HEALTH_URL: ${{ vars.APP_HEALTH_URL || 'https://www.thebuzz-quiz.de/api/health' }}
+        run: |
+          echo "Pinging $HEALTH_URL ..."
+          response=$(curl -s -w "\n%{http_code}" --retry 3 --retry-delay 5 "$HEALTH_URL")
+          body=$(echo "$response" | head -n 1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Response ($status): $body"
+          if [ "$status" -ne 200 ]; then
+            echo "Health check failed with status $status"
+            exit 1
+          fi

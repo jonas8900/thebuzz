@@ -1,64 +1,63 @@
-import { getServerSession } from "next-auth";
 import Temporaryuser from "../../../../db/models/Temporaryuser";
-import Game from "../../../../db/models/Game";
-import { authOptions } from "../../auth/[...nextauth]";
 import dbConnect from "../../../../db/connect";
-
-
+import { requireGameOwner } from "@/lib/authGuard";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
   const { playerId, gameId } = req.body;
-
-  console.log(playerId);
-
-  console.log(ip);
-
   if (!gameId || !playerId) {
-    return res.status(400).json({ message: "Missing gameId or playerId" });
+    return res.status(400).json({ message: "Spiel-ID und Spieler-ID sind erforderlich." });
   }
 
   await dbConnect();
 
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(403).json({ message: "No access" });
-  }
+  const auth = await requireGameOwner(req, res, gameId);
+  if (!auth) return;
 
   try {
-    const game = await Game.findById(gameId);
-    if (!game) {
-      return res.status(404).json({ message: "Game not found" });
-    }
-
-    if (game.blockedips.includes(ip)) {
-      return res.status(403).json({ message: "Your IP has been blocked for this game" });
-    }
-
-    console.log(playerId,"playerid");
-
-
+    const { game } = auth;
     const temporaryUser = await Temporaryuser.findById(playerId);
 
     if (!temporaryUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Spieler nicht gefunden." });
     }
 
-    if (!game.blockedips.includes(ip) && temporaryUser && !game.blockedusers.some(user => user.user.toString() === temporaryUser._id.toString())) {
-      game.blockedips.push(ip);
-      game.blockedusers.push({ user: temporaryUser._id, blockedip: ip });
-      await game.save();
-    } else {
-      return res.status(403).json({ message: "Your IP has already been blocked for this game or User not found" });
+    // Use the player's stored IP hash (recorded when joining) rather than the admin's request IP
+    const playerIpHash = temporaryUser.ipHash;
+
+    const alreadyBlockedUser = game.blockedusers.some(
+      (entry) => entry.user && entry.user.toString() === temporaryUser._id.toString()
+    );
+
+    if (!alreadyBlockedUser) {
+      game.blockedusers.push({
+        user: temporaryUser._id,
+        blockedip: playerIpHash || "unknown",
+      });
     }
 
-    return res.status(201).json({ message: "User deleted and IP blocked", game: game });
+    if (playerIpHash && !game.blockedips.includes(playerIpHash)) {
+      game.blockedips.push(playerIpHash);
+    }
+
+    game.players = game.players.filter(
+      (p) => p.playerId && p.playerId.toString() !== temporaryUser._id.toString()
+    );
+
+    await game.save();
+
+    return res.status(200).json({
+      message: "Spieler gekickt und für dieses Spiel gesperrt.",
+      game,
+    });
   } catch (error) {
-    console.error("Fehler beim löschen des Users:", error);
-    return res.status(500).json({ message: "Fehler beim löschen des Users", error: error.message });
+    console.error("Error kicking player:", error);
+    return res.status(500).json({
+      message: "Fehler beim Entfernen des Spielers.",
+      error: error.message,
+    });
   }
 }

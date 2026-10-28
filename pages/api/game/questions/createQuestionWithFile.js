@@ -1,11 +1,11 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../auth/[...nextauth]";
+import crypto from "crypto";
 import Task from "../../../../db/models/Task";
 import Game from "../../../../db/models/Game";
 import dbConnect from "../../../../db/connect";
 import formidable from "formidable";
 import AWS from "aws-sdk";
 import fs from "fs";
+import { requireAdminSession } from "@/lib/authGuard";
 
 AWS.config.update({
   region: process.env.AWS_REGION,
@@ -13,9 +13,17 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/webp",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+]);
+
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
 };
 
@@ -26,111 +34,117 @@ export default async function handler(req, res) {
 
   await dbConnect();
 
-  const session = await getServerSession(req, res, authOptions); 
-  
-  if (!session) {
-    return res.status(403).json({ message: "No access" });
-  }
+  const session = await requireAdminSession(req, res);
+  if (!session) return;
 
-  try {
+  const form = formidable({
+    maxFileSize: 10 * 1024 * 1024, // 10 MB
+  });
 
-    const form = formidable({
-      maxFileSize: 10 * 1024 * 1024,  
-    });
-    
-    form.parse(req, async (err, fields, files) => {
-        if (err) {
-          if (err.code === "LIMIT_FILE_SIZE") {
-            return res.status(400).json({ error: "Die Datei ist zu groß. Bitte wählen Sie eine Datei, die kleiner als 3 MB ist." });
-          }
-          console.error(err);
-          return res.status(400).json({ error: "Fehler beim Verarbeiten der Formulardaten." });
-        }
-      
-        // Konvertiere Felder in den richtigen Datentyp
-        const gameId = Array.isArray(fields.gameId) ? fields.gameId[0] : fields.gameId;
-        const question = Array.isArray(fields.question) ? fields.question[0] : fields.question;
-        const correctanswer = Array.isArray(fields.correctanswer) ? fields.correctanswer[0] : fields.correctanswer;
-        const mode = Array.isArray(fields.mode) ? fields.mode[0] : fields.mode;
-        const points = Array.isArray(fields.points) ? Number(fields.points[0]) : Number(fields.points);
-        const pointsgiven = Array.isArray(fields.pointsgiven) ? fields.pointsgiven[0] === 'true' : fields.pointsgiven;
-      
-
-      
-        const file = files.image?.[0];
-      
-        if (!file) {
-          return res.status(400).json({ error: "Keine Datei hochgeladen." });
-        }
-      
-        const filePath = file.filepath;
-      
-        if (!filePath) {
-          return res.status(400).json({ error: "Der Dateipfad ist undefiniert." });
-        }
-      
-        if (!fs.existsSync(filePath)) {
-          return res.status(400).json({ error: "Dateipfad existiert nicht." });
-        }
-      
-        const fileStats = fs.statSync(filePath);
-        if (fileStats.size === 0) {
-          return res.status(400).json({ error: "Datei ist leer." });
-        }
-      
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.on("error", (err) => {
-          console.error("File Stream Error:", err);
-          return res.status(500).json({ error: "Fehler beim Lesen der Datei." });
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE" || err.code === 1009) {
+        return res.status(400).json({
+          message: "Die Datei ist zu groß. Maximal 10 MB sind erlaubt.",
+          error: "Die Datei ist zu groß. Maximal 10 MB sind erlaubt.",
         });
-      
-        const str = file.originalFilename;
-        const newFilename = str.lastIndexOf(".") !== -1 ? str.slice(0, str.lastIndexOf(".")) + ".webp" : str + ".webp";
-      
-        const uploadParams = {
-          Bucket: process.env.AWS_S3_BUCKET_NAME,
-          Key: `games/${Date.now()}-${newFilename}`,
-          Body: fileStream,
-          ContentType: file.mimetype || "application/octet-stream", 
-          CacheControl: "public, max-age=31536000",
-        };
-      
-        try {
-          const data = await s3.upload(uploadParams).promise();
-      
-          const newQuestion = await Task.create({
-            question,
-            correctanswer,
-            mode,
-            gameId,
-            file: data.Location,
-            points,
-            pointsgiven,
-          });
-      
-          const updatedGame = await Game.findByIdAndUpdate(
-            gameId,
-            { $push: { questions: newQuestion._id } },
-            { new: true }
-          );
-      
-          fs.unlink(filePath, (err) => {
-            if (err) {
-              console.error("Fehler beim Löschen der Datei:", err);
-            } else {
-              console.log("Datei erfolgreich gelöscht:", filePath);
-            }
-          });
-      
-          return res.status(201).json({ message: "Frage erstellt", game: updatedGame, question: newQuestion });
-        } catch (error) {
-          console.error("Fehler beim Hochladen der Datei:", error);
-          return res.status(500).json({ error: "Fehler beim Hochladen der Datei." });
-        }
+      }
+      console.error("Form parse error:", err);
+      return res.status(400).json({
+        message: "Fehler beim Verarbeiten der Formulardaten.",
+        error: "Fehler beim Verarbeiten der Formulardaten.",
+      });
+    }
+
+    const gameId = Array.isArray(fields.gameId) ? fields.gameId[0] : fields.gameId;
+    const question = Array.isArray(fields.question) ? fields.question[0] : fields.question;
+    const correctanswer = Array.isArray(fields.correctanswer)
+      ? fields.correctanswer[0]
+      : fields.correctanswer;
+    const mode = Array.isArray(fields.mode) ? fields.mode[0] : fields.mode;
+    const points = Array.isArray(fields.points)
+      ? Number(fields.points[0])
+      : Number(fields.points);
+    const pointsgiven = Array.isArray(fields.pointsgiven)
+      ? fields.pointsgiven[0] === "true"
+      : Boolean(fields.pointsgiven);
+
+    // Verify that the authenticated admin owns the target game
+    const targetGame = await Game.findOne({ _id: gameId, admin: session.user.id });
+    if (!targetGame) {
+      return res.status(403).json({
+        message: "Keine Berechtigung für dieses Spiel.",
+        error: "Keine Berechtigung für dieses Spiel.",
+      });
+    }
+
+    const file = Array.isArray(files.image) ? files.image[0] : files.image;
+    if (!file || !file.filepath) {
+      return res.status(400).json({
+        message: "Bitte wähle ein Bild zum Hochladen aus.",
+        error: "Bitte wähle ein Bild zum Hochladen aus.",
+      });
+    }
+
+    if (!ALLOWED_IMAGE_MIME_TYPES.has(file.mimetype)) {
+      fs.unlink(file.filepath, () => {});
+      return res.status(400).json({
+        message: "Ungültiges Bildformat. Erlaubt sind JPG, PNG, WebP und GIF.",
+        error: "Ungültiges Bildformat. Erlaubt sind JPG, PNG, WebP und GIF.",
+      });
+    }
+
+    if (!fs.existsSync(file.filepath) || fs.statSync(file.filepath).size === 0) {
+      return res.status(400).json({
+        message: "Die hochgeladene Datei ist leer.",
+        error: "Die hochgeladene Datei ist leer.",
+      });
+    }
+
+    const fileStream = fs.createReadStream(file.filepath);
+    const safeRandomKey = `games/${Date.now()}-${crypto.randomUUID()}.webp`;
+
+    const uploadParams = {
+      Bucket: process.env.AWS_S3_BUCKET_NAME,
+      Key: safeRandomKey,
+      Body: fileStream,
+      ContentType: file.mimetype || "image/webp",
+      CacheControl: "public, max-age=31536000",
+    };
+
+    try {
+      const data = await s3.upload(uploadParams).promise();
+
+      const newQuestion = await Task.create({
+        question,
+        correctanswer,
+        mode,
+        gameId,
+        file: data.Location,
+        points,
+        pointsgiven,
       });
 
-  } catch (error) {
-    console.error("Fehler beim Erstellen der Frage:", error);
-    return res.status(500).json({ message: "Fehler beim Erstellen der Frage", error: error.message });
-  }
+      const updatedGame = await Game.findByIdAndUpdate(
+        gameId,
+        { $push: { questions: newQuestion._id } },
+        { new: true }
+      );
+
+      fs.unlink(file.filepath, () => {});
+
+      return res.status(201).json({
+        message: "Bilderfrage erfolgreich erstellt! 🎉",
+        game: updatedGame,
+        question: newQuestion,
+      });
+    } catch (error) {
+      fs.unlink(file.filepath, () => {});
+      console.error("Error uploading image to S3:", error);
+      return res.status(500).json({
+        message: "Fehler beim Hochladen des Bildes.",
+        error: "Fehler beim Hochladen des Bildes.",
+      });
+    }
+  });
 }

@@ -1,17 +1,17 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { RateLimiterMemory } from "rate-limiter-flexible";
 import dbConnect from "../../../db/connect";
 import User from "../../../db/models/User";
-import { RateLimiterMemory } from 'rate-limiter-flexible';
-import GoogleProvider from "next-auth/providers/google"
 import Temporaryuser from "../../../db/models/Temporaryuser";
-
+import { normalizeEmail } from "@/lib/normalizeInput";
+import { getClientIpFromReq } from "@/lib/hashIp";
 
 const rateLimiter = new RateLimiterMemory({
-  points: 5, 
+  points: 5,
   duration: 60 * 5,
 });
-
 
 export const authOptions = {
   providers: [
@@ -22,36 +22,31 @@ export const authOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
+        const ip = getClientIpFromReq(req);
 
-        const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
-
-        if (!credentials) {
-          throw new Error("Bitte gib deine Anmeldedaten ein.");
-        }
-
-        if (!credentials.email || !credentials.password) {
+        if (!credentials?.email || !credentials?.password) {
           throw new Error("Bitte gib sowohl E-Mail als auch Passwort ein.");
         }
 
         try {
           await rateLimiter.consume(ip);
-        } catch (rateLimiterRes) {
-          throw new Error("Zu viele Anfragen. Dein Account wurde für 5 Minuten gesperrt. Bitte versuche es später erneut.");
+        } catch {
+          throw new Error(
+            "Zu viele Anmeldeversuche. Bitte warte 5 Minuten und versuche es erneut."
+          );
         }
 
         await dbConnect();
 
-        
-
-
-        const user = await User.findOne({ email: credentials.email });
+        const email = normalizeEmail(credentials.email);
+        const user = await User.findOne({ email });
         if (!user) {
-          throw new Error("Kein Benutzer mit dieser E-Mail gefunden.");
+          throw new Error("Ungültige E-Mail-Adresse oder falsches Passwort.");
         }
 
         const isValid = await user.comparePassword(credentials.password);
         if (!isValid) {
-          throw new Error("Falsches Passwort.");
+          throw new Error("Ungültige E-Mail-Adresse oder falsches Passwort.");
         }
 
         return {
@@ -68,46 +63,48 @@ export const authOptions = {
       name: "Gastzugang",
       credentials: {
         username: { label: "Username", type: "text" },
+        gameId: { label: "Game ID", type: "text" },
       },
       async authorize(credentials) {
         try {
-          const { username, gameId } = credentials; 
+          const username = credentials?.username?.trim();
+          const gameId = credentials?.gameId;
+
           if (!username || !gameId) {
-            throw new Error("Username und gameId sind erforderlich");
+            throw new Error("Benutzername und Spiel-ID sind erforderlich.");
           }
-      
+
           await dbConnect();
-      
-          let tempUser = await Temporaryuser.findOne({ username });
+
+          // Scope temporary user lookup to the specific game to avoid cross-game collisions
+          let tempUser = await Temporaryuser.findOne({ username, yourgame: gameId });
           if (!tempUser) {
             tempUser = await Temporaryuser.create({ username, yourgame: gameId });
           }
-      
-      
+
           return {
             id: tempUser._id.toString(),
             username: tempUser.username,
             role: "guest",
-            gameId: tempUser.yourgame.toString(), 
+            gameId: tempUser.yourgame.toString(),
           };
         } catch (error) {
-          console.error("Fehler im Gastzugang:", error);
-          throw new Error("Fehler beim Erstellen des temporären Benutzers");
+          console.error("Guest login error:", error);
+          throw new Error("Fehler beim Beitritt als Gast.");
         }
-      }
-    }), 
+      },
+    }),
     GoogleProvider({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        authorization: {
-            params: {
-              prompt: "consent",
-              access_type: "offline",
-              response_type: "code"
-            }
-          }
-    })     
-    
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
+    }),
   ],
   pages: {
     signIn: "/auth/login",
@@ -116,8 +113,8 @@ export const authOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, 
-    updateAge: 24 * 60 * 60, 
+    maxAge: 30 * 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -131,21 +128,26 @@ export const authOptions = {
         const email = profile?.email?.toLowerCase();
         if (!email) return false;
 
-
-        const baseUsername =
-          (profile?.name || email.split("@")[0] || "user")
-            .toLowerCase()
-            .replace(/\s+/g, "_");
+        const baseUsername = (profile?.name || email.split("@")[0] || "user")
+          .toLowerCase()
+          .replace(/\s+/g, "_");
 
         let dbUser = await User.findOne({ email });
         if (!dbUser) {
+          // Ensure generated username is unique if another user already has the same baseUsername
+          let uniqueUsername = baseUsername;
+          const usernameTaken = await User.exists({ username: uniqueUsername });
+          if (usernameTaken) {
+            uniqueUsername = `${baseUsername}_${Math.floor(1000 + Math.random() * 9000)}`;
+          }
+
           dbUser = await User.create({
             email,
-            name: profile?.name || "",
-            username: baseUsername,
-            role: "user",                     
-            image: profile?.picture || null, 
-            provider: "google",              
+            name: profile?.name || baseUsername,
+            username: uniqueUsername,
+            role: "user",
+            image: profile?.picture || null,
+            provider: "google",
           });
         } else {
           const update = {};
@@ -174,14 +176,14 @@ export const authOptions = {
       return baseUrl;
     },
 
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.role = user.role;
         token.name = user.name;
         token.username = user.username;
-        token.gameId = user.gameId; 
+        token.gameId = user.gameId;
 
         if (account?.provider === "google") {
           token.provider = "google";
@@ -190,12 +192,16 @@ export const authOptions = {
           if (account.refresh_token) token.refreshToken = account.refresh_token;
           token.accessTokenExpires = account.expires_at
             ? account.expires_at * 1000
-            : Date.now() + 60 * 60 * 1000; 
+            : Date.now() + 60 * 60 * 1000;
         }
       }
 
-
-      if (token.provider === "google" && token.accessTokenExpires && Date.now() > token.accessTokenExpires && token.refreshToken) {
+      if (
+        token.provider === "google" &&
+        token.accessTokenExpires &&
+        Date.now() > token.accessTokenExpires &&
+        token.refreshToken
+      ) {
         try {
           const params = new URLSearchParams({
             client_id: process.env.GOOGLE_CLIENT_ID,
@@ -215,9 +221,7 @@ export const authOptions = {
 
           token.accessToken = data.access_token;
           token.accessTokenExpires = Date.now() + data.expires_in * 1000;
-  
-        } catch (e) {
-
+        } catch {
           delete token.accessToken;
           delete token.accessTokenExpires;
           delete token.refreshToken;
@@ -229,7 +233,6 @@ export const authOptions = {
 
     async session({ session, token }) {
       session.user = session.user || {};
-
       session.user.id = token.id;
       session.user.email = token.email;
       session.user.role = token.role;
