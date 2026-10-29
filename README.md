@@ -32,11 +32,9 @@ Thank you for taking the time to explore TheBuzz!
 ### Creating a Game and Adding Questions
 <video controls src="2026-10-29 16-34-01.mp4" title="Title"></video>
 
-### Inviting Players and Starting a Round
+### Inviting Players, Starting a Round and Live Gameplay
 <video controls src="Einladen und Spiel starten.mp4" title="Title"></video>
 
-### Live Gameplay
-<video controls src="Spielablauf.mp4" title="Title"></video>
 
 ## Deployment
 
