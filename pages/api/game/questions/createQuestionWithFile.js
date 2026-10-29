@@ -3,15 +3,17 @@ import Task from "../../../../db/models/Task";
 import Game from "../../../../db/models/Game";
 import dbConnect from "../../../../db/connect";
 import formidable from "formidable";
-import AWS from "aws-sdk";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import { requireAdminSession } from "@/lib/authGuard";
 
-AWS.config.update({
+const s3 = new S3Client({
   region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+  },
 });
-
-const s3 = new AWS.S3();
 
 const ALLOWED_IMAGE_MIME_TYPES = new Set([
   "image/webp",
@@ -101,26 +103,27 @@ export default async function handler(req, res) {
       });
     }
 
-    const fileStream = fs.createReadStream(file.filepath);
+    const fileBuffer = fs.readFileSync(file.filepath);
     const safeRandomKey = `games/${Date.now()}-${crypto.randomUUID()}.webp`;
 
     const uploadParams = {
       Bucket: process.env.AWS_S3_BUCKET_NAME,
       Key: safeRandomKey,
-      Body: fileStream,
+      Body: fileBuffer,
       ContentType: file.mimetype || "image/webp",
       CacheControl: "public, max-age=31536000",
     };
 
     try {
-      const data = await s3.upload(uploadParams).promise();
+      await s3.send(new PutObjectCommand(uploadParams));
+      const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${safeRandomKey}`;
 
       const newQuestion = await Task.create({
         question,
         correctanswer,
         mode,
         gameId,
-        file: data.Location,
+        file: fileUrl,
         points,
         pointsgiven,
       });
